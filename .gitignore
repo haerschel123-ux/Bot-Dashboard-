@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+
+# Vom Bot zur Laufzeit erzeugte Dateien (enthalten Tokens/Zugangsdaten!)
+config.json
+guilds_config.json
+banlist.json
+log_state.json
+dayz_bot.log
+economy.db
+economy.db.bak*
+shop_items.json
+requirements.txt
+README.txt
