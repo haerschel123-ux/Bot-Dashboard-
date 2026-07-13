@@ -88,10 +88,11 @@ log = logging.getLogger("DayZBot")
 # ══════════════════════════════════════════════════════════════
 #  SCHRITT 3 – Standard-Konfiguration (wird auto-erstellt)
 # ══════════════════════════════════════════════════════════════
-CONFIG_FILE    = "config.json"
-GUILDS_FILE    = "guilds_config.json"
-BANLIST_FILE   = "banlist.json"
-LOG_STATE_FILE = "log_state.json"
+CONFIG_FILE       = "config.json"
+GUILDS_FILE       = "guilds_config.json"
+BANLIST_FILE      = "banlist.json"
+LOG_STATE_FILE    = "log_state.json"
+WHITELIST_REQ_FILE = "whitelist_requests.json"
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "_anleitung": [
@@ -129,6 +130,16 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     ],
     "nitrado_ban_category": "",
     "nitrado_ban_key":      "",
+
+    "_anleitung_whitelist": [
+        "Die Whitelist läuft wie die Banliste über die NITRADO-SERVEREINSTELLUNGEN",
+        "(1 Name pro Zeile). /whitelist add|remove|show und das Whitelist-Panel",
+        "(/send whitelist panel) nutzen die Nitrado-API.",
+        "nitrado_whitelist_category/nitrado_whitelist_key: Nur setzen, falls die",
+        "  Auto-Erkennung (Settings-Key 'whitelist') das falsche Feld findet – sonst leer."
+    ],
+    "nitrado_whitelist_category": "",
+    "nitrado_whitelist_key":      "",
 
     "guild_ids": [111111111111111111],
 
@@ -388,6 +399,15 @@ BEFEHLE (alle nur für Admins mit der konfigurierten Rolle)
 /ban_entfernen <spieler>        → Name(n) von der Nitrado-Banliste entfernen
 /banlist                        → Nitrado-Banliste anzeigen (Servereinstellungen)
 
+/whitelist add <spieler>        → Name(n) auf die Nitrado-Whitelist setzen (Komma = mehrere)
+/whitelist remove <spieler>     → Name(n) von der Nitrado-Whitelist entfernen
+/whitelist show                 → Nitrado-Whitelist anzeigen (Servereinstellungen)
+/send whitelist panel <panel_channel> <admin_channel>
+                                → Whitelist-Anmelde-Panel senden. Spieler tragen per
+                                  Button ihren PSN-Namen ein, Admins geben die Anfrage
+                                  im admin_channel per Button frei/ab; bei Freigabe wird
+                                  der Name automatisch zur Nitrado-Whitelist hinzugefügt.
+
 /admin_position                 → Letzte bekannte Positionen aller Spieler
 /spieler_suche <name>           → Spieler in den Logs suchen
 /log_status                     → Log-Polling Status anzeigen
@@ -473,7 +493,7 @@ Der Bot sucht beim Start automatisch in folgenden Pfaden:
     if os.path.exists("README.txt"):
         try:
             with open("README.txt", "r", encoding="utf-8") as f:
-                needs_readme = "NUR diese 3 Angaben" not in f.read()
+                needs_readme = "/send whitelist panel" not in f.read()
         except Exception:
             needs_readme = True
     if needs_readme:
@@ -491,6 +511,7 @@ class ConfigManager:
         self.guilds:    Dict = {}
         self.bans:      Dict = {}
         self.log_state: Dict = {}
+        self.whitelist_reqs: Dict = {}
 
     def load_all(self):
         _create_helper_files()
@@ -498,6 +519,7 @@ class ConfigManager:
         self.guilds    = self._load_or_create(GUILDS_FILE,    {})
         self.bans      = self._load_or_create(BANLIST_FILE,   {})
         self.log_state = self._load_or_create(LOG_STATE_FILE, {})
+        self.whitelist_reqs = self._load_or_create(WHITELIST_REQ_FILE, {})
         # Fehlende neue Felder (Shop/Economy/Casino) in bestehende config.json ergänzen
         if self._merge_defaults(self.config, DEFAULT_CONFIG):
             self.save_config()
@@ -543,6 +565,7 @@ class ConfigManager:
     def save_guilds(self):   self.save(GUILDS_FILE,    self.guilds)
     def save_bans(self):     self.save(BANLIST_FILE,   self.bans)
     def save_log_state(self):self.save(LOG_STATE_FILE, self.log_state)
+    def save_whitelist_reqs(self): self.save(WHITELIST_REQ_FILE, self.whitelist_reqs)
 
     def get_channel(self, guild_id: int, log_type: str) -> Optional[int]:
         return self.guilds.get(str(guild_id), {}).get(log_type)
@@ -2036,6 +2059,18 @@ class DayZBot(discord.Client):
         self._discover_retry_ts = 0.0  # letzter Auto-Discovery-Retry (log_poll)
 
     async def setup_hook(self):
+        # Persistente Views registrieren, damit Panel-/Freigabe-Buttons einen
+        # Bot-Neustart überleben (timeout=None + feste custom_ids)
+        try:
+            self.add_view(WhitelistPanelView())
+            for reqid in list(cfg.whitelist_reqs.keys()):
+                self.add_view(WhitelistApprovalView(reqid))
+            if cfg.whitelist_reqs:
+                log.info(f"[BOT] {len(cfg.whitelist_reqs)} offene Whitelist-Anfrage(n) "
+                         f"wiederhergestellt.")
+        except Exception as e:
+            log.error(f"[BOT] Persistente Whitelist-Views konnten nicht registriert werden: {e}")
+
         guild_ids = cfg.config.get("guild_ids", [])
         if not guild_ids:
             log.warning("[BOT] Keine guild_ids konfiguriert – Befehle werden global registriert (24h Verzögerung).")
@@ -3920,6 +3955,425 @@ async def cmd_banlist(interaction: discord.Interaction):
 
 
 # ══════════════════════════════════════════════════════════════
+#  Whitelist – Hilfsfunktionen (Whitelist in den Nitrado-
+#  Servereinstellungen, 1 Name pro Zeile – analog zur Banliste)
+# ══════════════════════════════════════════════════════════════
+def _find_whitelist_setting(settings: Dict) -> Tuple[str, str, str]:
+    """Sucht das Whitelist-Setting in den Nitrado-Settings.
+    Reihenfolge: Config-Override (nitrado_whitelist_category/-key) →
+    Auto-Erkennung (Key 'whitelist') → Fallback ('general', 'whitelist').
+    Gibt (category, key, aktueller_wert) zurück."""
+    ov_cat = str(cfg.config.get("nitrado_whitelist_category") or "").strip()
+    ov_key = str(cfg.config.get("nitrado_whitelist_key") or "").strip()
+    if ov_cat and ov_key:
+        val = ((settings.get(ov_cat) or {}).get(ov_key)
+               if isinstance(settings.get(ov_cat), dict) else None)
+        return ov_cat, ov_key, str(val or "")
+    for category, keys in settings.items():
+        if not isinstance(keys, dict):
+            continue
+        for key, val in keys.items():
+            if str(key).lower() == "whitelist":
+                return str(category), str(key), str(val or "")
+    return "general", "whitelist", ""
+
+async def _read_whitelist() -> Tuple[List[str], str, str]:
+    """Liest die Whitelist aus den Nitrado-Servereinstellungen.
+    Gibt (namen, category, key) zurück. Wirft RuntimeError bei API-Fehler –
+    Aufrufer dürfen dann NICHT schreiben (sonst würde die Liste überschrieben)."""
+    settings = await bot.nitrado.get_settings()
+    if settings is None:
+        raise RuntimeError("Nitrado-API nicht erreichbar (Settings konnten nicht gelesen werden)")
+    category, key, raw = _find_whitelist_setting(settings)
+    names = [l.strip() for l in raw.splitlines() if l.strip()]
+    return names, category, key
+
+async def _write_whitelist(names: List[str], category: str, key: str) -> Tuple[bool, str]:
+    """Schreibt die Whitelist in die Nitrado-Servereinstellungen (1 Name pro Zeile)."""
+    return await bot.nitrado.set_setting(category, key, "\r\n".join(names))
+
+
+# ══════════════════════════════════════════════════════════════
+#  /whitelist add|remove|show – Whitelist verwalten (Admin)
+# ══════════════════════════════════════════════════════════════
+whitelist_group = app_commands.Group(
+    name="whitelist",
+    description="✅ Whitelist in den Nitrado-Servereinstellungen verwalten (Admin)")
+
+
+@whitelist_group.command(
+    name="add",
+    description="✅ Spieler zur Whitelist hinzufügen (mehrere per Komma/Zeile)")
+@app_commands.describe(spieler="PlayStation-Name(n) – mehrere per Komma getrennt")
+async def whitelist_add(interaction: discord.Interaction, spieler: str):
+    if not _is_admin(interaction):
+        return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
+    await interaction.response.defer()
+
+    names = _split_names(spieler.replace("\n", ","))
+    if not names:
+        return await interaction.followup.send("❌ Keinen gültigen Namen angegeben.")
+
+    try:
+        current, category, key = await _read_whitelist()
+    except Exception as e:
+        return await interaction.followup.send(
+            f"❌ Nitrado-Whitelist konnte nicht gelesen werden – nichts geändert.\n`{e}`")
+
+    existing_lower = {n.lower() for n in current}
+    added   = [n for n in names if n.lower() not in existing_lower]
+    already = [n for n in names if n.lower() in existing_lower]
+
+    sv = "ℹ️ Alle Namen standen bereits auf der Whitelist"
+    if added:
+        ok, msg = await _write_whitelist(current + added, category, key)
+        if not ok:
+            return await interaction.followup.send(
+                f"❌ Nitrado-Whitelist konnte nicht gespeichert werden – nichts geändert.\n`{msg}`")
+        sv = "✅ In der Nitrado-Whitelist gespeichert"
+
+    embed = discord.Embed(title="✅ Whitelist aktualisiert", color=0x2ECC71)
+    embed.add_field(name="Hinzugefügt",
+                    value="\n".join(f"`{n}`" for n in added) or "–", inline=True)
+    if already:
+        embed.add_field(name="Bereits auf der Whitelist",
+                        value="\n".join(f"`{n}`" for n in already), inline=True)
+    embed.add_field(name="Hinzugefügt von", value=str(interaction.user), inline=True)
+    embed.add_field(name="Nitrado",         value=sv,                    inline=False)
+    embed.set_footer(text="Änderung greift ggf. erst nach einem Server-Neustart.")
+    await interaction.followup.send(embed=embed)
+
+
+@whitelist_group.command(
+    name="remove",
+    description="🗑️ Spieler von der Whitelist entfernen (mehrere per Komma/Zeile)")
+@app_commands.describe(spieler="PlayStation-Name(n) – mehrere per Komma getrennt")
+async def whitelist_remove(interaction: discord.Interaction, spieler: str):
+    if not _is_admin(interaction):
+        return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
+    await interaction.response.defer()
+
+    names = _split_names(spieler.replace("\n", ","))
+    if not names:
+        return await interaction.followup.send("❌ Keinen gültigen Namen angegeben.")
+
+    try:
+        current, category, key = await _read_whitelist()
+    except Exception as e:
+        return await interaction.followup.send(
+            f"❌ Nitrado-Whitelist konnte nicht gelesen werden – nichts geändert.\n`{e}`")
+
+    wanted_lower = {n.lower() for n in names}
+    new_list  = [n for n in current if n.lower() not in wanted_lower]
+    removed   = [n for n in current if n.lower() in wanted_lower]
+    not_found = [n for n in names if n.lower() not in {r.lower() for r in removed}]
+
+    sv = "ℹ️ Keiner der Namen stand auf der Whitelist"
+    if removed:
+        ok, msg = await _write_whitelist(new_list, category, key)
+        if not ok:
+            return await interaction.followup.send(
+                f"❌ Nitrado-Whitelist konnte nicht gespeichert werden – nichts geändert.\n`{msg}`")
+        sv = "✅ Von der Nitrado-Whitelist entfernt"
+
+    embed = discord.Embed(title="🗑️ Whitelist aktualisiert", color=0xE67E22)
+    embed.add_field(name="Entfernt",
+                    value="\n".join(f"`{n}`" for n in removed) or "–", inline=True)
+    if not_found:
+        embed.add_field(name="Nicht auf der Liste",
+                        value="\n".join(f"`{n}`" for n in not_found), inline=True)
+    embed.add_field(name="Nitrado", value=sv, inline=False)
+    embed.set_footer(text="Änderung greift ggf. erst nach einem Server-Neustart.")
+    await interaction.followup.send(embed=embed)
+
+
+@whitelist_group.command(
+    name="show",
+    description="📋 Zeigt die aktuellen Spieler auf der Whitelist (Admin)")
+async def whitelist_show(interaction: discord.Interaction):
+    if not _is_admin(interaction):
+        return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
+    await interaction.response.defer(ephemeral=True)
+
+    try:
+        names, _category, _key = await _read_whitelist()
+    except Exception as e:
+        return await interaction.followup.send(
+            f"❌ Nitrado-Whitelist konnte nicht gelesen werden.\n`{e}`", ephemeral=True)
+
+    if not names:
+        return await interaction.followup.send(
+            "ℹ️ Es stehen keine Spieler auf der Whitelist.", ephemeral=True)
+
+    embed = discord.Embed(
+        title=f"✅ Whitelist – {len(names)} Spieler",
+        color=0x2ECC71)
+    lines = [f"• `{n}`" for n in sorted(names, key=str.lower)]
+    chunks, chunk = [], []
+    for line in lines:
+        if len("\n".join(chunk + [line])) > 1000:
+            chunks.append("\n".join(chunk))
+            chunk = [line]
+        else:
+            chunk.append(line)
+    if chunk:
+        chunks.append("\n".join(chunk))
+    for i, c in enumerate(chunks[:25]):
+        embed.add_field(name=f"Spieler {i+1}" if len(chunks) > 1 else "Spieler",
+                        value=c, inline=False)
+    await interaction.followup.send(embed=embed, ephemeral=True)
+
+
+bot.tree.add_command(whitelist_group)
+
+
+# ══════════════════════════════════════════════════════════════
+#  Whitelist-Anfrage-Panel (Spieler reichen ihren PSN-Namen ein,
+#  Admins geben per Button frei/ab). Persistente Views (timeout=None
+#  + feste custom_ids) → überleben einen Bot-Neustart.
+# ══════════════════════════════════════════════════════════════
+WHITELIST_PANEL_TEXT = ("Klick auf den Button und trage deinen PlayStation Namen ein "
+                        "um zur whitelist hinzugefügt werden zu können")
+
+
+def _whitelist_request_embed(requester_id: int, psn: str) -> discord.Embed:
+    embed = discord.Embed(
+        title="🎮 Neue Whitelist-Anfrage",
+        description="Ein Admin muss diese Anfrage prüfen.",
+        color=0x5865F2,
+        timestamp=datetime.now(timezone.utc))
+    embed.add_field(name="Angefragt von", value=f"<@{requester_id}>", inline=True)
+    embed.add_field(name="PlayStation-Name", value=f"`{psn}`", inline=True)
+    return embed
+
+
+class WhitelistRequestModal(discord.ui.Modal, title="🎮 PSN Name eintragen"):
+    """Formular, in das der Spieler seinen PlayStation-Namen einträgt."""
+
+    def __init__(self):
+        super().__init__()
+        self.psn_in = discord.ui.TextInput(
+            label="Dein PlayStation Name",
+            placeholder="z.B. DeinPSNName",
+            required=True, max_length=32)
+        self.add_item(self.psn_in)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        raw = str(self.psn_in.value or "")
+        psn = (raw.splitlines()[0].strip() if raw.strip() else "")
+        if not psn:
+            return await interaction.response.send_message(
+                "❌ Kein Name eingegeben.", ephemeral=True)
+        if "," in psn:
+            return await interaction.response.send_message(
+                "❌ Bitte nur **einen** Namen eintragen (ohne Komma).", ephemeral=True)
+
+        gid = interaction.guild_id
+        admin_ch_id = cfg.get_channel(gid, "whitelist_request")
+        if not admin_ch_id:
+            return await interaction.response.send_message(
+                "❌ Das Whitelist-System ist noch nicht eingerichtet. "
+                "Bitte wende dich an einen Admin.", ephemeral=True)
+        admin_ch = bot.get_channel(int(admin_ch_id))
+        if admin_ch is None:
+            return await interaction.response.send_message(
+                "❌ Der Anfrage-Channel wurde nicht gefunden. "
+                "Bitte wende dich an einen Admin.", ephemeral=True)
+
+        # Doppelte Anfrage für denselben PSN-Namen abwehren
+        for r in cfg.whitelist_reqs.values():
+            if (str(r.get("guild_id")) == str(gid)
+                    and str(r.get("psn", "")).lower() == psn.lower()):
+                return await interaction.response.send_message(
+                    f"ℹ️ Für **{psn}** läuft bereits eine Anfrage. "
+                    "Bitte warte auf die Freigabe.", ephemeral=True)
+
+        reqid = uuid.uuid4().hex[:12]
+        req = {
+            "requester_id":     interaction.user.id,
+            "requester_name":   str(interaction.user),
+            "psn":              psn,
+            "guild_id":         gid,
+            "admin_channel_id": int(admin_ch_id),
+            "message_id":       None,
+            "created_at":       datetime.now(timezone.utc).isoformat(),
+        }
+        try:
+            msg = await admin_ch.send(
+                embed=_whitelist_request_embed(interaction.user.id, psn),
+                view=WhitelistApprovalView(reqid))
+        except discord.Forbidden:
+            return await interaction.response.send_message(
+                "❌ Der Bot darf im Anfrage-Channel nicht schreiben. "
+                "Bitte informiere einen Admin.", ephemeral=True)
+        req["message_id"] = msg.id
+        cfg.whitelist_reqs[reqid] = req
+        cfg.save_whitelist_reqs()
+
+        await interaction.response.send_message(
+            f"✅ Deine Anfrage für den PSN-Namen **{psn}** wurde eingereicht. "
+            "Ein Admin prüft sie in Kürze.", ephemeral=True)
+
+    async def on_error(self, interaction: discord.Interaction, error: Exception):
+        log.error(f"[WHITELIST] Anfrage-Modal-Fehler: {error}")
+        msg = "❌ Etwas ist schiefgelaufen. Bitte versuche es erneut."
+        if interaction.response.is_done():
+            await interaction.followup.send(msg, ephemeral=True)
+        else:
+            await interaction.response.send_message(msg, ephemeral=True)
+
+
+class WhitelistPanelView(discord.ui.View):
+    """Persistentes Panel mit dem Button, der das PSN-Eingabe-Modal öffnet."""
+
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="PSN Name eintragen", emoji="🎮",
+                       style=discord.ButtonStyle.primary,
+                       custom_id="wl_panel_open")
+    async def open_modal(self, interaction: discord.Interaction,
+                         button: discord.ui.Button):
+        await interaction.response.send_modal(WhitelistRequestModal())
+
+
+class WhitelistApprovalView(discord.ui.View):
+    """Persistente Freigabe-Buttons (Akzeptieren/Ablehnen) für eine Anfrage.
+    custom_ids tragen die reqid, damit sie einen Neustart überleben."""
+
+    def __init__(self, reqid: str):
+        super().__init__(timeout=None)
+        self.reqid = reqid
+        approve = discord.ui.Button(
+            label="Akzeptieren", emoji="✅",
+            style=discord.ButtonStyle.success, custom_id=f"wl_approve:{reqid}")
+        reject = discord.ui.Button(
+            label="Ablehnen", emoji="❌",
+            style=discord.ButtonStyle.danger, custom_id=f"wl_reject:{reqid}")
+        approve.callback = self._approve
+        reject.callback  = self._reject
+        self.add_item(approve)
+        self.add_item(reject)
+
+    async def _approve(self, interaction: discord.Interaction):
+        if not _is_admin(interaction):
+            return await _deny(interaction)
+        req = cfg.whitelist_reqs.pop(self.reqid, None)
+        cfg.save_whitelist_reqs()
+        if not req:
+            return await interaction.response.send_message(
+                "ℹ️ Diese Anfrage wurde bereits bearbeitet.", ephemeral=True)
+
+        if bot.nitrado is None:
+            cfg.whitelist_reqs[self.reqid] = req
+            cfg.save_whitelist_reqs()
+            return await interaction.response.send_message(
+                "❌ Nitrado ist noch nicht eingerichtet – führe zuerst "
+                "`/setup token` aus. Anfrage bleibt offen.", ephemeral=True)
+
+        await interaction.response.defer()
+        try:
+            current, category, key = await _read_whitelist()
+        except Exception as e:
+            cfg.whitelist_reqs[self.reqid] = req
+            cfg.save_whitelist_reqs()
+            return await interaction.followup.send(
+                f"❌ Whitelist konnte nicht gelesen werden – nichts geändert. "
+                f"Anfrage bleibt offen.\n`{e}`", ephemeral=True)
+
+        psn = req["psn"]
+        if psn.lower() not in {n.lower() for n in current}:
+            ok, msg = await _write_whitelist(current + [psn], category, key)
+            if not ok:
+                cfg.whitelist_reqs[self.reqid] = req
+                cfg.save_whitelist_reqs()
+                return await interaction.followup.send(
+                    f"❌ Whitelist konnte nicht gespeichert werden – nichts geändert. "
+                    f"Anfrage bleibt offen.\n`{msg}`", ephemeral=True)
+            nitrado_note = "✅ Zur Nitrado-Whitelist hinzugefügt"
+        else:
+            nitrado_note = "ℹ️ Stand bereits auf der Whitelist"
+
+        embed = discord.Embed(
+            title="✅ Whitelist-Anfrage angenommen",
+            color=0x2ECC71, timestamp=datetime.now(timezone.utc))
+        embed.add_field(name="Spieler", value=f"<@{req['requester_id']}>", inline=True)
+        embed.add_field(name="PlayStation-Name", value=f"`{psn}`", inline=True)
+        embed.add_field(name="Status", value=nitrado_note, inline=False)
+        embed.add_field(name="Bearbeitet von",
+                        value=interaction.user.mention, inline=False)
+        embed.set_footer(text="Änderung greift ggf. erst nach einem Server-Neustart.")
+        await interaction.edit_original_response(embed=embed, view=None)
+
+    async def _reject(self, interaction: discord.Interaction):
+        if not _is_admin(interaction):
+            return await _deny(interaction)
+        req = cfg.whitelist_reqs.pop(self.reqid, None)
+        cfg.save_whitelist_reqs()
+        if not req:
+            return await interaction.response.send_message(
+                "ℹ️ Diese Anfrage wurde bereits bearbeitet.", ephemeral=True)
+
+        embed = discord.Embed(
+            title="❌ Whitelist-Anfrage abgelehnt",
+            color=0xE74C3C, timestamp=datetime.now(timezone.utc))
+        embed.add_field(name="Spieler", value=f"<@{req['requester_id']}>", inline=True)
+        embed.add_field(name="PlayStation-Name", value=f"`{req['psn']}`", inline=True)
+        embed.add_field(name="Status",
+                        value="❌ Nicht zur Whitelist hinzugefügt", inline=False)
+        embed.add_field(name="Bearbeitet von",
+                        value=interaction.user.mention, inline=False)
+        await interaction.response.edit_message(embed=embed, view=None)
+
+
+# ── /send whitelist panel – Panel in einen Channel senden (Admin) ──
+send_group = app_commands.Group(name="send", description="📨 Panels/Embeds senden (Admin)")
+send_whitelist_group = app_commands.Group(
+    name="whitelist", description="✅ Whitelist-Panel senden", parent=send_group)
+
+
+@send_whitelist_group.command(
+    name="panel",
+    description="📩 Whitelist-Anfrage-Panel in einen Channel senden (Admin)")
+@app_commands.describe(
+    panel_channel="Channel, in dem das Panel für die Spieler erscheint",
+    admin_channel="Staff-Channel, in dem die Anfragen zur Freigabe landen")
+async def send_whitelist_panel(interaction: discord.Interaction,
+                               panel_channel: discord.TextChannel,
+                               admin_channel: discord.TextChannel):
+    if not _is_admin(interaction):
+        return await _deny(interaction)
+
+    # Anfrage-Channel pro Guild merken (das Modal liest ihn beim Absenden aus)
+    cfg.set_channel(interaction.guild_id, "whitelist_request", admin_channel.id)
+
+    panel_embed = discord.Embed(
+        title="✅ Whitelist-Anmeldung",
+        description=WHITELIST_PANEL_TEXT,
+        color=0x5865F2)
+    try:
+        await panel_channel.send(embed=panel_embed, view=WhitelistPanelView())
+    except discord.Forbidden:
+        return await interaction.response.send_message(
+            f"❌ Ich darf in {panel_channel.mention} nicht schreiben. "
+            "Bitte Kanal-Rechte prüfen.", ephemeral=True)
+
+    await interaction.response.send_message(
+        f"✅ Whitelist-Panel in {panel_channel.mention} gesendet.\n"
+        f"Anfragen zur Freigabe erscheinen in {admin_channel.mention}.",
+        ephemeral=True)
+
+
+bot.tree.add_command(send_group)
+
+
+# ══════════════════════════════════════════════════════════════
 #  /admin_position – Letzte bekannte Spieler-Positionen
 # ══════════════════════════════════════════════════════════════
 @bot.tree.command(name="admin_position",
@@ -4366,6 +4820,10 @@ async def cmd_hilfe(interaction: discord.Interaction):
         "`/ban <spieler> [grund]` — Auf die Nitrado-Banliste setzen (Komma = mehrere)\n"
         "`/ban_entfernen <spieler>` — Von der Nitrado-Banliste entfernen\n"
         "`/banlist` — Nitrado-Banliste anzeigen\n"
+        "`/whitelist add <spieler>` — Auf die Nitrado-Whitelist setzen (Komma = mehrere)\n"
+        "`/whitelist remove <spieler>` — Von der Nitrado-Whitelist entfernen\n"
+        "`/whitelist show` — Nitrado-Whitelist anzeigen\n"
+        "`/send whitelist panel <panel> <admin>` — Whitelist-Anmelde-Panel senden\n"
         "`/admin_position` — Letzte Positionen\n"
         "`/spieler_suche <name>` — Spieler in Logs suchen"
     ), inline=False)
