@@ -115,7 +115,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "   (Nitrado-Token: Nitrado → Benutzereinstellungen → API-Schlüssel,",
         "   Long-Life-Token. Er kann auch weiterhin direkt hier eingetragen werden.)"
     ],
-    "bot_token":         "HIER_DEIN_DISCORD_BOT_TOKEN_EINTRAGEN",
+    "bot_token":         "MTUxNTk3MjY0NzExNTAzNDYzNA.G0qBxc.FbH_2TIfl_9akpUxLw9EGIKGSajkzyNqMQgxmw",
     "nitrado_token":     "",
     "service_id":        "",
     "nitrado_api_base":  "https://api.nitrado.net",
