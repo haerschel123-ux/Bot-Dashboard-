@@ -1,0 +1,164 @@
+/* DayZ Bot Dashboard – dunkles Layout */
+* { box-sizing: border-box; }
+:root {
+  --bg: #14171c; --bg2: #1c2129; --bg3: #242b36;
+  --fg: #e8ecf1; --muted: #8b98a9; --line: #2e3745;
+  --accent: #4dd0e1; --green: #2ecc71; --red: #e74c3c; --yellow: #ffd166;
+}
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg); color: var(--fg);
+  font: 15px/1.5 "Segoe UI", system-ui, sans-serif;
+}
+.hidden { display: none !important; }
+.muted { color: var(--muted); font-size: 0.9em; }
+.error { color: var(--red); }
+code { background: var(--bg3); padding: 1px 5px; border-radius: 4px; }
+h1 { font-size: 1.4rem; } h2 { margin-top: 0; } h3 { margin: 0.8em 0 0.4em; }
+
+/* ── Buttons / Inputs ─────────────────────────────── */
+.btn {
+  background: var(--bg3); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.95em;
+}
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: #06282e; font-weight: 600; border: none; }
+.btn.primary:hover { filter: brightness(1.1); }
+.btn.danger { color: var(--red); }
+.btn.small { padding: 4px 10px; font-size: 0.85em; }
+input, select, textarea {
+  background: var(--bg2); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 10px; width: 100%; font-size: 0.95em;
+}
+input:focus, select:focus { outline: none; border-color: var(--accent); }
+label { display: block; margin: 8px 0; }
+.row2 { display: flex; gap: 10px; }
+.row2 > * { flex: 1; }
+.row-inline { display: flex; gap: 8px; align-items: center; }
+.row-inline select { flex: 1; }
+.check input { width: auto; margin-right: 8px; }
+
+/* ── Login ────────────────────────────────────────── */
+.login-wrap {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at top, #1d2733 0%, var(--bg) 65%);
+}
+.login-card {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 14px;
+  padding: 28px 32px; width: min(440px, 92vw); box-shadow: 0 10px 40px #0008;
+}
+.login-card input, .login-card select { margin: 10px 0; }
+.login-card .btn { width: 100%; margin-top: 4px; }
+
+/* ── App-Layout ───────────────────────────────────── */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 230px; flex-shrink: 0; background: var(--bg2);
+  border-right: 1px solid var(--line); display: flex; flex-direction: column;
+  padding: 14px 10px; gap: 6px; position: sticky; top: 0; height: 100vh;
+}
+.brand { font-size: 1.15em; font-weight: 700; padding: 4px 8px 10px; }
+.server-badge {
+  background: var(--bg3); border-radius: 10px; padding: 8px 10px;
+  margin-bottom: 8px; font-size: 0.9em; word-break: break-word;
+}
+.nav-btn {
+  background: none; border: none; color: var(--fg); text-align: left;
+  padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 1em;
+}
+.nav-btn:hover { background: var(--bg3); }
+.nav-btn.active { background: var(--accent); color: #06282e; font-weight: 600; }
+.sidebar-footer { margin-top: auto; display: flex; gap: 6px; }
+.content { flex: 1; padding: 22px 26px; min-width: 0; }
+.view { max-width: 1100px; }
+.card {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px 18px; margin: 12px 0; max-width: 560px;
+}
+.banner {
+  background: #3a2e18; border: 1px solid #7a5c1e; border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 16px;
+}
+#toast-area { position: fixed; right: 18px; bottom: 18px; z-index: 3000;
+  display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  background: var(--bg3); border-left: 4px solid var(--accent);
+  border-radius: 8px; padding: 10px 14px; max-width: 380px;
+  box-shadow: 0 6px 18px #0007; animation: fadein 0.2s;
+}
+.toast.ok { border-left-color: var(--green); }
+.toast.err { border-left-color: var(--red); }
+@keyframes fadein { from { opacity: 0; transform: translateY(8px); } }
+
+/* ── Feeds ────────────────────────────────────────── */
+.feed-guild { margin-bottom: 20px; }
+.feed-row {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 14px; margin: 6px 0;
+}
+.feed-row .feed-name { flex: 1; }
+.feed-row select { width: 260px; }
+.feed-row .feed-state { width: 26px; text-align: center; }
+
+/* ── Zonen ────────────────────────────────────────── */
+.zone-layout { display: flex; gap: 18px; flex-wrap: wrap; }
+.zone-map-wrap { flex: 2; min-width: 380px; }
+.zone-map-wrap .btn { margin-top: 8px; }
+.zone-side { flex: 1; min-width: 280px; }
+.zone-item {
+  background: var(--bg2); border: 1px solid var(--line); border-radius: 10px;
+  padding: 8px 12px; margin: 6px 0; display: flex; align-items: center; gap: 8px;
+}
+.zone-item .zi-info { flex: 1; }
+.map-box {
+  height: 480px; border-radius: 12px; border: 1px solid var(--line);
+  background: #10151a;
+}
+.map-box.big { height: min(72vh, 760px); flex: 1; }
+.town-label {
+  color: #ffffffcc; font-size: 11px; font-weight: 600; white-space: nowrap;
+  text-shadow: 0 1px 3px #000;
+}
+
+/* ── Shop ─────────────────────────────────────────── */
+.bundle-row { display: flex; gap: 8px; margin: 6px 0; }
+.bundle-row input.cnt { width: 74px; flex-shrink: 0; }
+.bundle-row .btn { flex-shrink: 0; }
+
+/* ── Karte + Filterpanel ──────────────────────────── */
+.map-layout { display: flex; gap: 0; align-items: stretch; }
+.filter-panel {
+  width: 240px; flex-shrink: 0; background: var(--bg2);
+  border: 1px solid var(--line); border-right: none;
+  border-radius: 12px 0 0 12px; padding: 10px; overflow-y: auto;
+  max-height: min(72vh, 760px); transition: width 0.15s;
+}
+.filter-panel.collapsed { width: 46px; padding: 10px 4px; }
+.filter-panel.collapsed .filter-boxes,
+.filter-panel.collapsed .filter-head span { display: none; }
+.filter-head { display: flex; justify-content: space-between; align-items: center;
+  font-weight: 600; margin-bottom: 8px; }
+.filter-box {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg3); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 9px; margin: 5px 0; cursor: pointer;
+  user-select: none; font-size: 0.9em;
+}
+.filter-box.off { opacity: 0.4; }
+.filter-box .dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.map-layout .map-box.big { border-radius: 0 12px 12px 0; }
+
+.leaflet-container { background: #10151a; font: inherit; }
+.leaflet-popup-content-wrapper { background: var(--bg2); color: var(--fg); }
+.leaflet-popup-tip { background: var(--bg2); }
+
+@media (max-width: 860px) {
+  .app { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; flex-direction: row;
+    flex-wrap: wrap; }
+  .sidebar-footer { margin-top: 0; }
+  .map-layout { flex-direction: column; }
+  .filter-panel { width: 100%; border-radius: 12px 12px 0 0; border-right: 1px solid var(--line); }
+  .map-layout .map-box.big { border-radius: 0 0 12px 12px; }
+}

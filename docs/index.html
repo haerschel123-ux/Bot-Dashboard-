@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DayZ Bot Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+<link rel="stylesheet" href="vendor/leaflet.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ══════════ Login: Token → Server-Auswahl ══════════ -->
+<div id="login" class="login-wrap">
+  <div class="login-card">
+    <h1>🎮 DayZ Bot Dashboard</h1>
+
+    <div id="login-step-token">
+      <p>Gib deinen <b>Nitrado-Token</b> ein (Nitrado → Benutzereinstellungen →
+         API-Schlüssel, Long-Life-Token):</p>
+      <input id="token-input" type="password" placeholder="Nitrado Long-Life-Token"
+             autocomplete="off">
+      <button id="token-confirm" class="btn primary">Bestätigen</button>
+      <p id="login-error" class="error hidden"></p>
+    </div>
+
+    <div id="login-step-server" class="hidden">
+      <p>Token akzeptiert – wähle deinen <b>Server</b>:</p>
+      <select id="server-select"></select>
+      <button id="server-confirm" class="btn primary">Server auswählen</button>
+      <p id="server-info" class="muted"></p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ App ══════════ -->
+<div id="app" class="app hidden">
+  <nav class="sidebar">
+    <div class="brand">🎮 DayZ Bot</div>
+    <div class="server-badge">
+      <div id="badge-server">–</div>
+      <div id="badge-map" class="muted">–</div>
+      <div id="badge-bot" class="muted">Bot: <span id="bot-status">…</span></div>
+    </div>
+    <button class="nav-btn active" data-view="feeds">📢 Feeds</button>
+    <button class="nav-btn" data-view="zones">🛡️ Zonen</button>
+    <button class="nav-btn" data-view="auto">⏰ Auto-Aufgaben</button>
+    <button class="nav-btn" data-view="shop">🛒 Shop</button>
+    <button class="nav-btn" data-view="karte">🗺️ Karte</button>
+    <div class="sidebar-footer">
+      <button id="btn-switch" class="btn small">Server wechseln</button>
+      <button id="btn-logout" class="btn small danger">Abmelden</button>
+    </div>
+  </nav>
+
+  <main class="content">
+    <div id="offline-banner" class="banner hidden">
+      ⚠️ Noch keine Daten vom Bot gefunden. Läuft der Bot und ist
+      <code>dashboard_enabled</code> aktiv? Er lädt die Daten automatisch auf
+      deinen Server hoch – das dauert nach dem Start bis zu einer Minute.
+      <button id="btn-retry-state" class="btn small">Erneut suchen</button>
+    </div>
+
+    <!-- Feeds -->
+    <section id="view-feeds" class="view">
+      <h2>📢 Feeds</h2>
+      <p class="muted">Lege optional für jeden Feed fest, in welchen
+        Discord-Channel er gepostet wird – wie <code>/setup feeds</code>.</p>
+      <div id="feeds-list"></div>
+    </section>
+
+    <!-- Zonen -->
+    <section id="view-zones" class="view hidden">
+      <h2>🛡️ Zonen</h2>
+      <p class="muted">Wie <code>/zone create</code> – zusätzlich kannst du
+        Zonen direkt auf der Karte <b>zeichnen</b>: Button drücken, Klick =
+        Zentrum, ziehen &amp; zweiter Klick = Radius.</p>
+      <div class="zone-layout">
+        <div class="zone-map-wrap">
+          <div id="zones-map" class="map-box"></div>
+          <button id="btn-draw-zone" class="btn primary">✏️ Zone auf Karte zeichnen</button>
+        </div>
+        <div class="zone-side">
+          <h3 id="zone-form-title">Neue Zone</h3>
+          <form id="zone-form">
+            <label>Name <input name="name" required maxlength="60"></label>
+            <div class="row2">
+              <label>X (Ost) <input name="x" type="number" step="0.1" required></label>
+              <label>Z (Nord) <input name="z" type="number" step="0.1" required></label>
+            </div>
+            <label>Radius (m) <input name="radius" type="number" min="10" max="10000" required></label>
+            <label>Ping-Rolle-ID (optional) <input name="role_id" pattern="\d*"></label>
+            <label>Warn-Channel (optional)
+              <select name="channel_id"><option value="">– Zonen-Feed/Adminlog –</option></select>
+            </label>
+            <div class="row2">
+              <button type="submit" class="btn primary">💾 Speichern</button>
+              <button type="button" id="zone-form-reset" class="btn">Leeren</button>
+            </div>
+          </form>
+          <h3>Bestehende Zonen</h3>
+          <div id="zones-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Auto-Aufgaben -->
+    <section id="view-auto" class="view hidden">
+      <h2>⏰ Auto-Aufgaben</h2>
+      <div class="card">
+        <h3>🔄 Automatische Server-Neustarts</h3>
+        <form id="auto-form">
+          <label class="check"><input type="checkbox" name="enabled"> Aktiviert</label>
+          <div class="row2">
+            <label>Erste Ausführung <input name="first_time" type="time" value="04:00" required></label>
+            <label>Intervall (Stunden)
+              <input name="interval_hours" type="number" min="1" max="24" value="4" required></label>
+          </div>
+          <p class="muted">Ankündigungen 15/5/1 Min vorher im <code>restart</code>-Feed.</p>
+          <p id="auto-next" class="muted"></p>
+          <button type="submit" class="btn primary">💾 Speichern</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Shop -->
+    <section id="view-shop" class="view hidden">
+      <h2>🛒 Shop</h2>
+      <button id="btn-new-bundle" class="btn primary">📦 Shop-Bundle erstellen</button>
+      <form id="bundle-form" class="card hidden">
+        <h3>📦 Neues Item / Bundle</h3>
+        <label>Name für die Shopliste <input name="name" required maxlength="100"></label>
+        <label>Kategorie
+          <span class="row-inline">
+            <select name="category"></select>
+            <button type="button" id="btn-new-category" class="btn small">＋ Neue Kategorie</button>
+          </span>
+        </label>
+        <label>Preis <input name="price" type="number" min="0" required></label>
+        <label>Items <span class="muted">(Autofill aus deiner types.xml – 1 Item = Einzelitem,
+          mehrere = Bundle)</span></label>
+        <div id="bundle-items"></div>
+        <button type="button" id="btn-add-item-row" class="btn small">＋ Item-Zeile</button>
+        <label>Limit (max. Menge pro Kauf)
+          <input name="max_per_buy" type="number" min="1" value="1" required></label>
+        <div class="row2">
+          <button type="submit" class="btn primary">💾 Speichern</button>
+          <button type="button" id="bundle-cancel" class="btn">Abbrechen</button>
+        </div>
+      </form>
+      <datalist id="item-datalist"></datalist>
+      <p id="catalog-info" class="muted"></p>
+    </section>
+
+    <!-- Karte -->
+    <section id="view-karte" class="view hidden">
+      <h2>🗺️ Karte <span id="map-name-label" class="muted"></span></h2>
+      <div class="map-layout">
+        <div id="filter-panel" class="filter-panel">
+          <div class="filter-head">
+            <span>Filter</span>
+            <button id="filter-toggle" class="btn small" title="Ein-/ausklappen">◀</button>
+          </div>
+          <div id="filter-boxes" class="filter-boxes"></div>
+        </div>
+        <div id="events-map" class="map-box big"></div>
+      </div>
+      <p class="muted">Aktualisiert sich automatisch alle 10 Sekunden.
+        Marker anklicken für Details.</p>
+    </section>
+  </main>
+</div>
+
+<div id="toast-area"></div>
+
+<script src="vendor/leaflet.js"></script>
+<script src="js/nitrado.js"></script>
+<script src="js/files.js"></script>
+<script src="js/map.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

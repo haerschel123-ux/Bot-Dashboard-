@@ -34,6 +34,7 @@ import random
 import threading
 import functools
 import glob
+from collections import deque
 from datetime import datetime, timezone, timedelta, date
 from typing import Optional, Dict, List, Tuple, Any
 from zoneinfo import ZoneInfo
@@ -94,6 +95,12 @@ BANLIST_FILE      = "banlist.json"
 LOG_STATE_FILE    = "log_state.json"
 WHITELIST_REQ_FILE = "whitelist_requests.json"
 
+# Dateien für das Web-Dashboard (Austausch über den Nitrado-FTP im Log-Verzeichnis):
+# sync = Befehle vom Dashboard an den Bot, state/catalog = Zustand für das Dashboard
+DASH_SYNC_FILE    = "dashboard_sync.json"
+DASH_STATE_FILE   = "dashboard_state.json"
+DASH_CATALOG_FILE = "dashboard_catalog.json"
+
 DEFAULT_CONFIG: Dict[str, Any] = {
     "_anleitung": [
         "1) Nur DIESE 2 Angaben sind nötig – alles andere richtet der Bot selbst ein:",
@@ -151,6 +158,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "log_poll_interval_seconds": 10,
     "max_embed_fields":          25,
     "map_name":                  "ChernarusPlus",
+
+    # Web-Dashboard (GitHub Pages): Der Bot tauscht dashboard_sync.json /
+    # dashboard_state.json über den Nitrado-FTP mit dem Dashboard aus.
+    # false = Sync komplett abschalten.
+    "dashboard_enabled": True,
 
     "_anleitung_neue_features": [
         "─────────── FEED-SCHUTZ / BELOHNUNGEN / AUTO-RESTART ───────────",
@@ -2057,6 +2069,11 @@ class DayZBot(discord.Client):
         self._zone_last_ping: Dict[Tuple[str, str], float] = {}  # letzter Ping pro Zone+Spieler
         self._zone_pos_seen: Dict[str, str] = {}              # Spieler → bereits bewertetes last_seen
         self._discover_retry_ts = 0.0  # letzter Auto-Discovery-Retry (log_poll)
+        # Web-Dashboard: Event-Puffer für die Karte + Sync-Zeitstempel
+        self.recent_events: deque = deque(maxlen=500)
+        self._dash_last_sync   = 0.0   # letzter Lesezyklus dashboard_sync.json
+        self._dash_last_state  = 0.0   # letzter Upload dashboard_state.json
+        self._dash_catalog_sig = None  # Signatur des zuletzt hochgeladenen Katalogs
 
     async def setup_hook(self):
         # Persistente Views registrieren, damit Panel-/Freigabe-Buttons einen
@@ -2323,6 +2340,10 @@ class DayZBot(discord.Client):
             cfg.log_state["last_poll_ts"] = now
             cfg.save_log_state()
 
+            # Events für die Dashboard-Karte puffern (inkl. Position)
+            for ev in events:
+                self.recent_events.append(_dashboard_event(ev, now))
+
             if events:
                 log.info(f"[POLL] {len(events)} neue Events aus {latest}")
                 # Rate-Limit-Schutz: pro Zyklus höchstens N Events posten
@@ -2339,6 +2360,8 @@ class DayZBot(discord.Client):
             # Spielzeit-Belohnung für offene Sitzungen gutschreiben
             await self._credit_playtime()
             await self._check_ftp_health()
+            # Web-Dashboard: Befehle einlesen + Zustand hochladen (gedrosselt)
+            await self._dashboard_sync()
         except Exception as e:
             log.error(f"[POLL] Fehler: {e}")
             await self._check_ftp_health()
@@ -2662,6 +2685,70 @@ class DayZBot(discord.Client):
                 description="Der FTP-Zugriff funktioniert wieder – die Feeds laufen normal weiter.",
                 color=0x2ECC71)
             await _post_feed(None, "adminlog", embed)
+
+    async def _dashboard_sync(self):
+        """Web-Dashboard-Austausch über den Nitrado-FTP: Befehle aus
+        dashboard_sync.json anwenden, Zustand nach dashboard_state.json
+        hochladen, Item-Katalog (Autofill) nach dashboard_catalog.json."""
+        if not cfg.config.get("dashboard_enabled", True) or not self.ftp:
+            return
+        log_dir = str(cfg.config.get("ftp_log_dir") or "").rstrip("/")
+        if not log_dir:
+            return
+        now = time.time()
+        if now - self._dash_last_sync < 10:
+            return
+        self._dash_last_sync = now
+        loop = asyncio.get_running_loop()
+
+        # ── 1. Befehle des Dashboards einlesen und anwenden ──────
+        raw = await loop.run_in_executor(
+            None, self.ftp.read_file, f"{log_dir}/{DASH_SYNC_FILE}")
+        done: Dict[str, Dict] = cfg.log_state.setdefault("dashboard_done", {})
+        changed = False
+        if raw:
+            try:
+                commands = (json.loads(raw) or {}).get("commands") or []
+            except Exception as e:
+                commands = []
+                log.warning(f"[DASH] {DASH_SYNC_FILE} unlesbar: {e}")
+            for cmd in commands:
+                cid = str((cmd or {}).get("id") or "")
+                if not cid or cid in done:
+                    continue
+                ok, msg = _apply_dashboard_command(cmd)
+                done[cid] = {"ok": ok, "msg": msg, "ts": now}
+                changed = True
+                log.info(f"[DASH] Befehl {cmd.get('action')} ({cid}): ok={ok} – {msg}")
+            if len(done) > 200:   # alte Befehls-Ergebnisse begrenzen
+                for k in sorted(done, key=lambda k: done[k].get("ts", 0))[:len(done) - 200]:
+                    done.pop(k, None)
+            if changed:
+                cfg.save_log_state()
+
+        # ── 2. Zustand fürs Dashboard hochladen ──────────────────
+        if changed or now - self._dash_last_state >= 15:
+            self._dash_last_state = now
+            content = json.dumps(_build_dashboard_state(self, done),
+                                 ensure_ascii=False, separators=(",", ":"))
+            ok = await loop.run_in_executor(
+                None, self.ftp.write_file, f"{log_dir}/{DASH_STATE_FILE}", content)
+            if not ok:
+                log.debug("[DASH] State-Upload fehlgeschlagen")
+
+        # ── 3. Item-Katalog nur bei Änderung hochladen (Autofill) ─
+        cat_sig = (catalog.source, len(catalog.items))
+        if cat_sig != self._dash_catalog_sig:
+            items = [{"n": str(it.get("name", "")), "c": str(it.get("category", "Misc"))}
+                     for it in catalog.items[:5000]]
+            payload = json.dumps({"ts": now, "categories": sorted(catalog.by_category),
+                                  "items": items},
+                                 ensure_ascii=False, separators=(",", ":"))
+            ok = await loop.run_in_executor(
+                None, self.ftp.write_file, f"{log_dir}/{DASH_CATALOG_FILE}", payload)
+            if ok:
+                self._dash_catalog_sig = cat_sig
+                log.info(f"[DASH] Katalog hochgeladen ({len(items)} Items)")
 
     async def _resolve_channel(self, channel_id: int):
         ch = self.get_channel(channel_id)
@@ -4371,6 +4458,237 @@ async def send_whitelist_panel(interaction: discord.Interaction,
 
 
 bot.tree.add_command(send_group)
+
+
+# ══════════════════════════════════════════════════════════════
+#  Web-Dashboard – Helfer für den FTP-Sync (siehe DayZBot._dashboard_sync)
+#  Alle Discord-IDs werden als STRINGS serialisiert: Snowflakes sind
+#  größer als 2^53 und würden in JavaScript sonst Präzision verlieren.
+# ══════════════════════════════════════════════════════════════
+def _pos_from_text(text: str) -> Optional[List[float]]:
+    """[x, z] (Ost, Nord) aus 'pos=<x, z, y>' bzw. 'x, z, y' – sonst None."""
+    m = re.search(r'pos\s*=\s*<([\d., \-]+)>', text, re.IGNORECASE)
+    nums_raw = m.group(1) if m else text
+    try:
+        nums = [float(p.strip()) for p in nums_raw.split(",")]
+    except (ValueError, AttributeError):
+        return None
+    if len(nums) < 2:
+        return None
+    return [round(nums[0], 1), round(nums[1], 1)]
+
+
+def _dashboard_event(ev: Dict, ts: float) -> Dict:
+    """Kompaktes Event für die Dashboard-Karte: Typ, Zeit, Label, Position."""
+    raw = str(ev.get("raw", ""))
+    pos = _pos_from_text(raw)
+    who = ev.get("victim") or ev.get("player") or ev.get("admin")
+    if pos is None and who:
+        p = DayZLogParser.player_positions.get(str(who))
+        if p and p.get("position"):
+            pos = _pos_from_text(str(p["position"]))
+
+    t = ev.get("type")
+    if t == "kill_pvp":
+        label = (f'{ev.get("killer")} ⚔ {ev.get("victim")} '
+                 f'({ev.get("weapon", "?")}, {ev.get("distance", "?")} m)')
+    elif t == "damage":
+        label = (f'{ev.get("attacker")} → {ev.get("victim")} '
+                 f'({ev.get("damage", "?")} dmg, {ev.get("weapon", "?")})')
+    elif t == "kill_env":
+        label = f'{ev.get("player")} gestorben ({ev.get("cause", "?")})'
+    elif t == "suicide":
+        label = f'{ev.get("player")} – Suizid'
+    elif t in ("connect", "disconnect", "connecting"):
+        verb = {"connect": "verbunden", "disconnect": "getrennt",
+                "connecting": "verbindet…"}[t]
+        label = f'{ev.get("player")} {verb}'
+    elif t == "basebuild":
+        label = f'{ev.get("player")}: {str(ev.get("item", "?"))[:60]}'
+    elif t == "chat":
+        label = f'{ev.get("player")}: {str(ev.get("message", ""))[:80]}'
+    elif t == "loot":
+        label = f'{ev.get("item")} {ev.get("action", "")}'
+    else:
+        label = raw[:100]
+    return {"t": t, "ts": round(ts, 1), "time": ev.get("timestamp") or "",
+            "label": label, "who": who, "pos": pos}
+
+
+def _apply_dashboard_command(cmd: Dict) -> Tuple[bool, str]:
+    """Wendet einen Dashboard-Befehl an (gleiche Logik wie die Slash-Befehle).
+    Gibt (ok, meldung) zurück; wirft nie."""
+    try:
+        action = str((cmd or {}).get("action") or "")
+
+        if action == "set_feed":
+            gid  = int(cmd["guild_id"])
+            feed = str(cmd["feed"])
+            if feed not in LOG_TYPES:
+                return False, f"Unbekannter Feed: {feed}"
+            ch = cmd.get("channel_id")
+            if ch:
+                cfg.set_channel(gid, feed, int(ch))
+                return True, "Feed-Channel gespeichert"
+            cfg.guilds.get(str(gid), {}).pop(feed, None)
+            cfg.save_guilds()
+            return True, "Feed-Channel entfernt"
+
+        if action == "zone_create":
+            name = str(cmd.get("name", "")).strip()
+            if not name or len(name) > 60:
+                return False, "Zonen-Name fehlt oder ist länger als 60 Zeichen"
+            if _find_zone(name):
+                return False, f"Zone {name} existiert bereits"
+            x, z, radius = float(cmd["x"]), float(cmd["z"]), float(cmd["radius"])
+            err = _validate_zone_geometry(x, z, radius)
+            if err:
+                return False, err
+            gid = cmd.get("guild_id") or (cfg.config.get("guild_ids") or [0])[0]
+            _zones().append({
+                "name":       name,
+                "x":          round(x, 1),
+                "z":          round(z, 1),
+                "radius":     round(radius, 1),
+                "role_id":    int(cmd["role_id"]) if cmd.get("role_id") else None,
+                "channel_id": int(cmd["channel_id"]) if cmd.get("channel_id") else None,
+                "guild_id":   int(gid),
+            })
+            cfg.save_config()
+            return True, f"Zone {name} angelegt"
+
+        if action == "zone_edit":
+            zone = _find_zone(str(cmd.get("name", "")))
+            if not zone:
+                return False, f"Zone {cmd.get('name')} nicht gefunden"
+            x = float(cmd.get("x", zone.get("x", 0.0)))
+            z = float(cmd.get("z", zone.get("z", 0.0)))
+            radius = float(cmd.get("radius", zone.get("radius", 0.0)))
+            err = _validate_zone_geometry(x, z, radius)
+            if err:
+                return False, err
+            zone["x"], zone["z"], zone["radius"] = round(x, 1), round(z, 1), round(radius, 1)
+            if "role_id" in cmd:
+                zone["role_id"] = int(cmd["role_id"]) if cmd.get("role_id") else None
+            if "channel_id" in cmd:
+                zone["channel_id"] = int(cmd["channel_id"]) if cmd.get("channel_id") else None
+            cfg.save_config()
+            _reset_zone_state(str(zone["name"]))
+            return True, f"Zone {zone['name']} aktualisiert"
+
+        if action == "zone_delete":
+            zone = _find_zone(str(cmd.get("name", "")))
+            if not zone:
+                return False, f"Zone {cmd.get('name')} nicht gefunden"
+            _zones().remove(zone)
+            cfg.save_config()
+            _reset_zone_state(str(zone["name"]))
+            return True, f"Zone {zone['name']} entfernt"
+
+        if action == "auto_restart":
+            enabled = bool(cmd.get("enabled"))
+            first = str(cmd.get("first_time", "04:00")).strip()
+            m = re.match(r"^(\d{1,2}):(\d{2})$", first)
+            if not m or not (0 <= int(m.group(1)) <= 23 and 0 <= int(m.group(2)) <= 59):
+                return False, "Uhrzeit ungültig (Format HH:MM)"
+            iv = max(1, min(24, int(cmd.get("interval_hours", 4))))
+            cfg.config["auto_restart_schedule"] = {
+                "enabled": enabled,
+                "first_time": f"{int(m.group(1)):02d}:{m.group(2)}",
+                "interval_hours": iv,
+            }
+            cfg.save_config()
+            bot._restart_announced.clear()
+            return True, ("Auto-Restart aktiviert" if enabled else "Auto-Restart deaktiviert")
+
+        if action == "shop_add":
+            name = str(cmd.get("name", "")).strip()[:100]
+            if not name:
+                return False, "Name fehlt"
+            if catalog.find(name):
+                return False, f"{name} existiert bereits im Katalog"
+            rows = cmd.get("items") or []
+            lines = "\n".join(
+                f'{max(1, int(r.get("count", 1)))}x{str(r.get("classname", "")).strip()}'
+                for r in rows if str(r.get("classname", "")).strip())
+            expanded, summary, errors = _parse_bundle_items(lines)
+            if not summary:
+                return False, "Keine gültigen Items" + (f" ({errors[0]})" if errors else "")
+            if len(expanded) > MAX_BUNDLE_PIECES:
+                return False, f"Zu viele Einzelstücke ({len(expanded)}, max. {MAX_BUNDLE_PIECES})"
+            price = int(cmd.get("price", 0))
+            if price < 0:
+                return False, "Preis muss >= 0 sein"
+            it: Dict[str, Any] = {
+                "name":               name,
+                "price":              price,
+                "category":           (str(cmd.get("category") or "Bundles").strip()[:60]
+                                       or "Bundles"),
+                "enabled":            True,
+                "max_amount_per_buy": max(1, int(cmd.get("max_per_buy", 1))),
+                "custom":             True,
+            }
+            if len(expanded) == 1:
+                it["classname"] = expanded[0]
+            else:
+                it["classnames"] = expanded
+            catalog.items.append(it)
+            saved = catalog.save()
+            unknown = sorted({cn for _, cn in summary if catalog.find(cn) is None})
+            msg = f"{name} gespeichert ({len(expanded)} Stück, {price:,})"
+            if unknown:
+                msg += f" – ⚠️ unbekannte Classnames: {', '.join(unknown[:5])}"
+            if not saved:
+                msg += " – ⚠️ nur im Speicher (Katalog nicht schreibbar)"
+            return True, msg
+
+        return False, f"Unbekannte Aktion: {action}"
+    except (KeyError, TypeError, ValueError) as e:
+        return False, f"Ungültige Befehlsdaten: {e}"
+    except Exception as e:
+        return False, f"Fehler: {e}"
+
+
+def _build_dashboard_state(bot_ref: "DayZBot", results: Dict) -> Dict:
+    """Zustand für das Dashboard (dashboard_state.json)."""
+    guilds = []
+    for gid in cfg.config.get("guild_ids", []):
+        g = bot_ref.get_guild(int(gid))
+        channels = ([{"id": str(c.id), "name": c.name} for c in g.text_channels][:200]
+                    if g else [])
+        guilds.append({
+            "id":       str(gid),
+            "name":     g.name if g else str(gid),
+            "channels": channels,
+            "feeds":    {ft: str(cfg.get_channel(int(gid), ft) or "")
+                         for ft in LOG_TYPES},
+        })
+    zones = [{
+        "name":       str(z.get("name", "")),
+        "x":          z.get("x"), "z": z.get("z"), "radius": z.get("radius"),
+        "role_id":    str(z["role_id"]) if z.get("role_id") else None,
+        "channel_id": str(z["channel_id"]) if z.get("channel_id") else None,
+        "guild_id":   str(z["guild_id"]) if z.get("guild_id") else None,
+    } for z in _zones() if isinstance(z, dict)]
+    sched = dict(cfg.config.get("auto_restart_schedule") or {})
+    sched["next_ts"] = bot_ref._next_scheduled_restart()
+    return {
+        "ts":              time.time(),
+        "map_name":        cfg.config.get("map_name", "ChernarusPlus"),
+        "service_id":      str(cfg.config.get("service_id") or ""),
+        "currency":        {"name":   cfg.config.get("currency_name", ""),
+                            "symbol": cfg.config.get("currency_symbol", "")},
+        "feed_types":      LOG_TYPES,
+        "guilds":          guilds,
+        "zones":           zones,
+        "auto_restart":    sched,
+        "shop_categories": sorted(catalog.by_category),
+        "events":          list(bot_ref.recent_events),
+        "positions":       {n: {"pos": _pos_from_text(str(p.get("position") or "")),
+                                "seen": p.get("last_seen")}
+                            for n, p in list(DayZLogParser.player_positions.items())[:200]},
+        "results":         results,
+    }
 
 
 # ══════════════════════════════════════════════════════════════
