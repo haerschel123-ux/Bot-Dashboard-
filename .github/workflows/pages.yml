@@ -1,0 +1,44 @@
+name: Deploy Dashboard to GitHub Pages
+
+# Deployt den Ordner docs/ als GitHub-Pages-Seite. Aktiviert Pages beim
+# ersten Lauf automatisch (enablement: true) – es muss nichts in den
+# Repo-Einstellungen von Hand umgeschaltet werden.
+
+on:
+  push:
+    branches: ["claude/bot-token-auto-detect-zswbuv"]
+    paths: ["docs/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages (aktiviert Pages automatisch)
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
