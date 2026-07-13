@@ -2033,6 +2033,7 @@ class DayZBot(discord.Client):
         # Zonen-Pings (/zone create): wiederholte Pings im Cooldown-Intervall
         self._zone_last_ping: Dict[Tuple[str, str], float] = {}  # letzter Ping pro Zone+Spieler
         self._zone_pos_seen: Dict[str, str] = {}              # Spieler → bereits bewertetes last_seen
+        self._discover_retry_ts = 0.0  # letzter Auto-Discovery-Retry (log_poll)
 
     async def setup_hook(self):
         guild_ids = cfg.config.get("guild_ids", [])
@@ -2169,7 +2170,20 @@ class DayZBot(discord.Client):
             return
         log_dir = cfg.config.get("ftp_log_dir")
         if not log_dir:
-            return
+            # Discovery beim Start fehlgeschlagen oder noch nicht gelaufen →
+            # automatisch erneut versuchen (alle 120s), sonst würden nie
+            # Kills/Builds/Damage gepostet, bis jemand /ftp_scan ausführt
+            now = time.time()
+            if now - self._discover_retry_ts < 120:
+                return
+            self._discover_retry_ts = now
+            try:
+                await self._auto_discover()
+            except Exception as e:
+                log.warning(f"[FTP] Auto-Discovery-Retry fehlgeschlagen: {e}")
+            log_dir = cfg.config.get("ftp_log_dir")
+            if not log_dir:
+                return
         try:
             loop = asyncio.get_running_loop()
             adm_files = await loop.run_in_executor(None, self.ftp.list_adm_files, log_dir)
@@ -2539,9 +2553,42 @@ class DayZBot(discord.Client):
             lt = "restart" if cfg.get_channel(gid, "restart") else "adminlog"
             await _post_feed(gid, lt, embed)
 
+    async def _try_refresh_ftp_credentials(self) -> bool:
+        """Selbstheilung bei FTP-Dauerausfall: Zugangsdaten frisch über den
+        Nitrado-Token holen und den FTPManager ersetzen, falls Nitrado sie
+        geändert hat (z.B. Passwort-Rotation). True = neue Daten übernommen."""
+        if not self.nitrado:
+            return False
+        try:
+            info = await self.nitrado.get_info()
+        except Exception:
+            return False
+        if not info:
+            return False
+        creds = NitradoAPI.extract_ftp_credentials(info)
+        if not creds:
+            return False
+        changed = (creds["host"] != cfg.config.get("ftp_host")
+                   or creds["user"] != cfg.config.get("ftp_user")
+                   or creds["password"] != cfg.config.get("ftp_password")
+                   or int(creds["port"]) != int(cfg.config.get("ftp_port") or 21))
+        if not changed:
+            return False
+        cfg.config["ftp_host"]     = creds["host"]
+        cfg.config["ftp_port"]     = creds["port"]
+        cfg.config["ftp_user"]     = creds["user"]
+        cfg.config["ftp_password"] = creds["password"]
+        cfg.save_config()
+        self.ftp = FTPManager(host=creds["host"], port=creds["port"],
+                              user=creds["user"], password=creds["password"])
+        log.info("[NITRADO] 🔄 FTP-Zugangsdaten über die API erneuert – "
+                 "Verbindung wird mit den neuen Daten aufgebaut.")
+        return True
+
     async def _check_ftp_health(self):
         """Warnt im Adminlog-Feed, wenn das FTP-Polling dauerhaft fehlschlägt
-        (Passwort geändert, Nitrado-Wartung), und meldet die Erholung."""
+        (Passwort geändert, Nitrado-Wartung), und meldet die Erholung.
+        Versucht vorher, die FTP-Zugangsdaten über den Nitrado-Token zu erneuern."""
         if not self.ftp:
             return
         fails     = self.ftp.consecutive_failures
@@ -2550,6 +2597,18 @@ class DayZBot(discord.Client):
         if fails >= threshold:
             if now - self._ftp_warned_ts >= 1800:   # höchstens alle 30 Min erneut warnen
                 self._ftp_warned_ts   = now
+                if await self._try_refresh_ftp_credentials():
+                    # Zugangsdaten waren veraltet → mit den neuen weitermachen,
+                    # keine Ausfall-Warnung nötig
+                    self._ftp_warn_active = False
+                    embed = discord.Embed(
+                        title="🔄 FTP-Zugang automatisch erneuert",
+                        description=("Die FTP-Zugriffe schlugen wiederholt fehl – der Bot "
+                                     "hat die Zugangsdaten über den Nitrado-Token neu "
+                                     "geholt und die Verbindung neu aufgebaut."),
+                        color=0x2ECC71)
+                    await _post_feed(None, "adminlog", embed)
+                    return
                 self._ftp_warn_active = True
                 embed = discord.Embed(
                     title="🚨 FTP-Verbindung gestört",
