@@ -7,9 +7,10 @@
 ╚══════════════════════════════════════════════════════════════════╝
 
 Beim ersten Start werden automatisch erstellt:
-  - config.json        (Hauptkonfiguration – nur bot_token, nitrado_token
-                        und guild_ids eintragen; Service-ID, FTP-Zugang und
-                        Karte werden automatisch über den Nitrado-Token erkannt)
+  - config.json        (Hauptkonfiguration – nur bot_token und guild_ids
+                        eintragen; den Nitrado-Token setzt du im Discord per
+                        /setup token mit Server-Auswahl im Dropdown – FTP-Zugang
+                        und aktive Karte werden dann automatisch erkannt)
   - guilds_config.json (Channel-Einstellungen pro Discord-Server)
   - banlist.json       (Lokale Ban-Datenbank)
   - log_state.json     (Log-Lese-Position)
@@ -94,20 +95,20 @@ LOG_STATE_FILE = "log_state.json"
 
 DEFAULT_CONFIG: Dict[str, Any] = {
     "_anleitung": [
-        "1) Nur DIESE 3 Angaben sind nötig – alles andere findet der Bot automatisch:",
+        "1) Nur DIESE 2 Angaben sind nötig – alles andere richtet der Bot selbst ein:",
         "2) bot_token: Discord Entwicklerportal → deine App → Bot → Token kopieren",
-        "3) nitrado_token: Nitrado → Benutzereinstellungen → API-Schlüssel (Long-Life-Token)",
-        "4) guild_ids: Discord → Einstellungen → Erweitert → Entwicklermodus aktivieren,",
+        "3) guild_ids: Discord → Einstellungen → Erweitert → Entwicklermodus aktivieren,",
         "   dann Rechtsklick auf deinen Server → ID kopieren. Mehrere IDs möglich!",
-        "5) admin_role_name: Name der Rolle, die Bot-Befehle nutzen darf (z.B. 'DayZ Admin')",
-        "6) Starte den Bot erneut nach dem Ausfüllen.",
-        "service_id, FTP-Zugang und die aktuelle Karte erkennt der Bot beim Start",
-        "automatisch über den Nitrado-Token und speichert sie hier als Cache.",
-        "service_id nur manuell setzen, wenn dein Token mehrere DayZ-Server hat und",
-        "der Bot den falschen wählt (Zahl aus der Nitrado-URL, z.B. nitrado.net/de/s/12345678)."
+        "4) admin_role_name: Name der Rolle, die Bot-Befehle nutzen darf (z.B. 'DayZ Admin')",
+        "5) Bot starten und im Discord /setup token <dein Nitrado-Token> ausführen:",
+        "   Es öffnet sich ein Dropdown mit deinen Nitrado-Servern – Server auswählen,",
+        "   bestätigen, fertig. FTP-Zugang und die aktuelle Karte erkennt der Bot",
+        "   automatisch und speichert alles hier als Cache.",
+        "   (Nitrado-Token: Nitrado → Benutzereinstellungen → API-Schlüssel,",
+        "   Long-Life-Token. Er kann auch weiterhin direkt hier eingetragen werden.)"
     ],
     "bot_token":         "HIER_DEIN_DISCORD_BOT_TOKEN_EINTRAGEN",
-    "nitrado_token":     "HIER_DEIN_NITRADO_TOKEN_EINTRAGEN",
+    "nitrado_token":     "",
     "service_id":        "",
     "nitrado_api_base":  "https://api.nitrado.net",
     "ftp_host":          "",
@@ -358,16 +359,20 @@ def _create_helper_files():
 
 ERSTE SCHRITTE
 ──────────────
-1. Öffne config.json und trage NUR diese 3 Angaben ein:
-   bot_token, nitrado_token und guild_ids.
+1. Öffne config.json und trage NUR diese 2 Angaben ein:
+   bot_token und guild_ids.
 2. Starte den Bot: python dayz_bot.py
-3. Service-ID, FTP-Zugang und die aktuelle Karte erkennt der Bot
-   automatisch über den Nitrado-Token; die Log-Verzeichnisse
-   findet er anschließend automatisch per FTP.
-4. Benutze /setup im Discord um Channels zuzuweisen.
+3. Führe im Discord /setup token <dein-nitrado-token> aus:
+   Es öffnet sich ein Dropdown mit deinen Nitrado-Servern –
+   Server auswählen und bestätigen. FTP-Zugang, die aktive Karte
+   und die Log-Verzeichnisse erkennt der Bot dann automatisch.
+4. Benutze /setup feeds im Discord um Channels zuzuweisen.
 
 BEFEHLE (alle nur für Admins mit der konfigurierten Rolle)
 ──────────────────────────────────────────────────────────
+/setup token <token>            → Nitrado-Token setzen; danach Server im
+                                   Dropdown auswählen & bestätigen (erkennt
+                                   FTP-Zugang und aktive Karte automatisch)
 /setup feeds <feed> #channel    → Feed-Channel setzen (Dropdown-Auswahl:
                                    killfeed, damagefeed, joinleave, suicide,
                                    chat, adminlog, envdeath, vehiclecrash,
@@ -548,15 +553,21 @@ class ConfigManager:
         self.save_guilds()
 
     def is_valid(self) -> Tuple[bool, List[str]]:
-        # service_id + FTP-Zugang werden beim Start automatisch über den
-        # Nitrado-Token erkannt – nur diese beiden Felder sind Pflicht.
+        # Nur der Discord-Bot-Token ist Pflicht. Der Nitrado-Token wird per
+        # /setup token im Discord gesetzt (oder optional hier eingetragen);
+        # service_id + FTP-Zugang erkennt der Bot dann automatisch.
         errors = []
         placeholders = ["HIER", "TOKEN", "EINTRAGEN", "1111111", "2222222"]
-        for key in ["bot_token", "nitrado_token"]:
+        for key in ["bot_token"]:
             val = str(self.config.get(key, ""))
             if not val or any(p in val for p in placeholders):
                 errors.append(key)
         return len(errors) == 0, errors
+
+    def has_nitrado_token(self) -> bool:
+        """True, wenn ein echter Nitrado-Token gesetzt ist (kein Platzhalter)."""
+        val = str(self.config.get("nitrado_token") or "").strip()
+        return bool(val) and "HIER" not in val and "EINTRAGEN" not in val
 
 cfg = ConfigManager()
 
@@ -2042,23 +2053,11 @@ class DayZBot(discord.Client):
         )
         # on_ready feuert auch bei jedem Discord-Reconnect → nur einmal initialisieren
         # (sonst leakt die alte aiohttp-Session und FTP wird unnötig neu gescannt)
-        if self.nitrado is None:
-            self.nitrado = NitradoAPI(
-                token=cfg.config["nitrado_token"],
-                service_id=cfg.config["service_id"],
-                base=cfg.config.get("nitrado_api_base", "https://api.nitrado.net"),
-            )
-        if self.ftp is None:
-            self.ftp = FTPManager(
-                host=cfg.config["ftp_host"],
-                port=cfg.config.get("ftp_port", 21),
-                user=cfg.config["ftp_user"],
-                password=cfg.config["ftp_password"],
-            )
-            await self._auto_discover()
-        # Shop-/Delivery-Manager initialisieren (braucht FTP + Nitrado)
-        if self.shop is None:
-            self.shop = ShopManager(self)
+        if cfg.has_nitrado_token() and str(cfg.config.get("service_id") or "").strip():
+            await self.init_nitrado()
+        else:
+            log.warning("[BOT] ⚠️ Noch kein Nitrado-Token/Server eingerichtet – "
+                        "führe im Discord /setup token aus.")
         # Nahezu-Echtzeit: höchstens 10s zwischen den Polls, mindestens 5s
         # (schont den FTP-Server). Größere Werte aus alten Configs werden
         # automatisch begrenzt, damit Feeds sofort nach Erscheinen posten.
@@ -2080,6 +2079,43 @@ class DayZBot(discord.Client):
             self.restart_scheduler.start()
         if not announcement_scheduler.is_running():
             announcement_scheduler.start()
+
+    async def init_nitrado(self, force: bool = False):
+        """Initialisiert NitradoAPI + FTPManager + ShopManager aus der Config.
+        force=True (für /setup token) ersetzt bestehende Instanzen – die alte
+        aiohttp-Session wird dabei sauber geschlossen."""
+        if force and self.nitrado is not None:
+            try:
+                await self.nitrado.close()
+            except Exception:
+                pass
+            self.nitrado = None
+        if force:
+            self.ftp = None
+
+        if self.nitrado is None:
+            self.nitrado = NitradoAPI(
+                token=cfg.config["nitrado_token"],
+                service_id=str(cfg.config.get("service_id") or ""),
+                base=cfg.config.get("nitrado_api_base", "https://api.nitrado.net"),
+            )
+        if self.ftp is None and all(str(cfg.config.get(k) or "").strip()
+                                    for k in ("ftp_host", "ftp_user", "ftp_password")):
+            self.ftp = FTPManager(
+                host=cfg.config["ftp_host"],
+                port=cfg.config.get("ftp_port", 21),
+                user=cfg.config["ftp_user"],
+                password=cfg.config["ftp_password"],
+            )
+            try:
+                await self._auto_discover()
+            except Exception as e:
+                # FTP gerade nicht erreichbar → Init nicht abbrechen;
+                # Discovery kann später per /ftp_scan nachgeholt werden
+                log.warning(f"[FTP] Auto-Discovery fehlgeschlagen: {e}")
+        # Shop-/Delivery-Manager initialisieren (braucht FTP + Nitrado)
+        if self.shop is None and self.ftp is not None:
+            self.shop = ShopManager(self)
 
     async def _auto_discover(self):
         """Sucht automatisch nach DayZ-Log-Verzeichnissen via FTP."""
@@ -2695,6 +2731,22 @@ async def _deny(interaction: discord.Interaction):
         await interaction.response.send_message(msg, ephemeral=True)
 
 
+async def _require_nitrado(interaction: discord.Interaction,
+                           need_ftp: bool = False) -> bool:
+    """True, wenn die Nitrado-Anbindung (und optional FTP) einsatzbereit ist.
+    Sonst ephemere Hinweis-Meldung → Befehl mit `return` abbrechen."""
+    if bot.nitrado is not None and (not need_ftp or bot.ftp is not None):
+        return True
+    msg = ("❌ Nitrado ist noch nicht eingerichtet.\n"
+           "Führe zuerst `/setup token <dein-nitrado-token>` aus und wähle "
+           "deinen Server im Dropdown aus.")
+    if interaction.response.is_done():
+        await interaction.followup.send(msg, ephemeral=True)
+    else:
+        await interaction.response.send_message(msg, ephemeral=True)
+    return False
+
+
 # ══════════════════════════════════════════════════════════════
 #  /setup – Alle Log-Channels konfigurieren
 # ══════════════════════════════════════════════════════════════
@@ -2729,6 +2781,166 @@ async def setup_overview(interaction: discord.Interaction):
             inline=False
         )
     await interaction.response.send_message(embed=embed, ephemeral=True)
+
+async def _finish_token_setup(token: str, service_id: str,
+                              service: Dict) -> discord.Embed:
+    """Wendet Token + Server-Auswahl aus /setup token an: speichert beides,
+    erkennt FTP-Zugang & aktuelle Karte, initialisiert Nitrado/FTP/Shop neu
+    und gibt ein Ergebnis-Embed zurück."""
+    old_service = str(cfg.config.get("service_id") or "").strip()
+    cfg.config["nitrado_token"] = token
+    cfg.config["service_id"]    = service_id
+    if old_service and old_service != service_id:
+        # Server-Wechsel: per-Server-Caches leeren, sonst zeigen Pfade,
+        # Server-IP und Log-Offset noch auf den alten Server
+        for k in ("ftp_log_dir", "ftp_ban_file", "ftp_profile_dir",
+                  "ftp_mission_dir", "cfg_effect_area_path", "server_ip"):
+            cfg.config[k] = ""
+        cfg.log_state.pop("current", None)
+        cfg.save_log_state()
+        log.info(f"[SETUP] Server-Wechsel {old_service} → {service_id}: "
+                 f"FTP-Pfade und Log-Position zurückgesetzt.")
+
+    api = NitradoAPI(token=token, service_id=service_id,
+                     base=cfg.config.get("nitrado_api_base", "https://api.nitrado.net"))
+    try:
+        info = await api.get_info()
+    finally:
+        await api.close()
+
+    warnings = []
+    if info:
+        _apply_gameserver_info(info)
+    else:
+        warnings.append("⚠️ Gameserver-Infos konnten nicht geladen werden "
+                        "(Nitrado-API-Fehler) – FTP/Karte nicht erkannt.")
+    cfg.save_config()
+
+    # Nitrado/FTP/Shop mit den neuen Daten (neu) initialisieren –
+    # inklusive FTP-Auto-Discovery der Log-Verzeichnisse
+    await bot.init_nitrado(force=True)
+
+    details  = service.get("details") or {}
+    name     = details.get("name") or details.get("game") or f"Service {service_id}"
+    ftp_host = cfg.config.get("ftp_host") or "❌ Nicht gefunden"
+    log_dir  = cfg.config.get("ftp_log_dir") or "❌ Nicht gefunden"
+    if not cfg.config.get("ftp_host"):
+        warnings.append("⚠️ Keine FTP-Zugangsdaten gefunden – Log-Feeds und "
+                        "Shop-Lieferung funktionieren so nicht.")
+
+    embed = discord.Embed(
+        title="✅ Nitrado-Server eingerichtet",
+        description=f"Der Bot arbeitet jetzt mit **{name}**.",
+        color=0x2ECC71 if not warnings else 0xE67E22)
+    embed.add_field(name="Service-ID",      value=f"`{service_id}`", inline=True)
+    embed.add_field(name="Aktive Karte",    value=cfg.config.get("map_name", "–"), inline=True)
+    embed.add_field(name="FTP-Host",        value=f"`{ftp_host}`",   inline=False)
+    embed.add_field(name="Log-Verzeichnis", value=f"`{log_dir}`",    inline=False)
+    if warnings:
+        embed.add_field(name="Hinweise", value="\n".join(warnings), inline=False)
+    embed.set_footer(text="Alle Werte wurden in config.json gespeichert – "
+                          "beim nächsten Start ist kein /setup token nötig.")
+    return embed
+
+
+class NitradoServerSelectView(discord.ui.View):
+    """Server-Auswahl für /setup token: Dropdown der über den Token
+    verfügbaren Nitrado-Server + Bestätigen-Button."""
+
+    def __init__(self, interaction: discord.Interaction, token: str,
+                 services: List[Dict]):
+        super().__init__(timeout=180)
+        self.author_id = interaction.user.id
+        self.token     = token
+        self.selected: Optional[str] = None
+        self._services = {str(s.get("id")): s for s in services}
+        options = []
+        for s in services[:25]:   # Discord erlaubt max. 25 Optionen pro Dropdown
+            details = s.get("details") or {}
+            label = str(details.get("name") or details.get("game")
+                        or f"Service {s.get('id')}")[:100]
+            desc  = " · ".join(x for x in (str(details.get("game") or "")[:50],
+                                           str(s.get("status") or ""),
+                                           f"ID {s.get('id')}") if x)[:100]
+            options.append(discord.SelectOption(label=label,
+                                                value=str(s.get("id")),
+                                                description=desc or None))
+        self.sel_server.options = options
+
+    async def interaction_check(self, itx: discord.Interaction) -> bool:
+        if itx.user.id != self.author_id:
+            await itx.response.send_message(
+                "❌ Nur wer den Befehl aufgerufen hat, kann hier auswählen.", ephemeral=True)
+            return False
+        return True
+
+    @discord.ui.select(placeholder="🖥️ Nitrado-Server auswählen",
+                       options=[discord.SelectOption(label="wird geladen…", value="0")])
+    async def sel_server(self, itx: discord.Interaction, select: discord.ui.Select):
+        self.selected = select.values[0]
+        await itx.response.defer()
+
+    @discord.ui.button(label="✅ Server bestätigen", style=discord.ButtonStyle.success)
+    async def confirm(self, itx: discord.Interaction, button: discord.ui.Button):
+        if self.selected is None:
+            return await itx.response.send_message(
+                "❌ Bitte zuerst einen Server im Dropdown auswählen.", ephemeral=True)
+        for child in self.children:
+            child.disabled = True
+        await itx.response.edit_message(
+            content="🔧 Richte den Server ein (FTP-Zugang, Karte, Log-Verzeichnisse)…",
+            embed=None, view=self)
+        try:
+            embed = await _finish_token_setup(
+                self.token, self.selected, self._services.get(self.selected) or {})
+        except Exception as e:
+            log.error(f"[SETUP] /setup token fehlgeschlagen: {e}")
+            embed = discord.Embed(
+                title="❌ Einrichtung fehlgeschlagen",
+                description=f"Unerwarteter Fehler: `{e}`\nBitte erneut versuchen.",
+                color=0xE74C3C)
+        await itx.edit_original_response(content=None, embed=embed, view=self)
+        self.stop()
+
+
+@setup_group.command(name="token",
+                     description="🔑 Nitrado-Token setzen & Server per Dropdown auswählen")
+@app_commands.describe(token="Dein Nitrado Long-Life-Token (Nitrado → Benutzereinstellungen → API-Schlüssel)")
+async def setup_token(interaction: discord.Interaction, token: str):
+    if not _is_admin(interaction):
+        return await _deny(interaction)
+    await interaction.response.defer(ephemeral=True)
+
+    token = token.strip()
+    api = NitradoAPI(token=token, service_id="",
+                     base=cfg.config.get("nitrado_api_base", "https://api.nitrado.net"))
+    try:
+        services = await api.list_services()
+    finally:
+        await api.close()
+
+    gameservers = [s for s in services
+                   if str(s.get("type", "")).lower() == "gameserver"]
+    if not gameservers:
+        return await interaction.followup.send(
+            "❌ Über diesen Token wurden keine Gameserver gefunden.\n"
+            "Prüfe, ob der Token korrekt kopiert wurde "
+            "(Nitrado → Benutzereinstellungen → API-Schlüssel, Long-Life-Token "
+            "mit Berechtigung für deine Services).", ephemeral=True)
+
+    desc = (f"Token akzeptiert – **{len(gameservers)} Server** gefunden.\n"
+            "Wähle im Dropdown den Server aus, mit dem der Bot arbeiten soll, "
+            "und bestätige. FTP-Zugang und die aktive Karte werden dann "
+            "automatisch erkannt.")
+    if len(gameservers) > 25:
+        desc += "\n⚠️ Es werden nur die ersten 25 Server angezeigt."
+    embed = discord.Embed(title="🔑 Nitrado-Server auswählen",
+                          description=desc, color=0x5865F2)
+    await interaction.followup.send(
+        embed=embed,
+        view=NitradoServerSelectView(interaction, token, gameservers),
+        ephemeral=True)
+
 
 bot.tree.add_command(setup_group)
 
@@ -2863,6 +3075,8 @@ async def _feed_autocomplete(
 async def cmd_neustart(interaction: discord.Interaction):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer()
     ok, msg = await bot.nitrado.restart()
     embed = discord.Embed(
@@ -2881,6 +3095,8 @@ async def cmd_neustart(interaction: discord.Interaction):
 async def cmd_stoppen(interaction: discord.Interaction):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer()
     ok, msg = await bot.nitrado.stop()
     embed = discord.Embed(
@@ -2899,6 +3115,8 @@ async def cmd_stoppen(interaction: discord.Interaction):
 async def cmd_status(interaction: discord.Interaction):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer()
 
     # ── 1. Nitrado API (parallel zum A2S-Ping) ────────────────
@@ -3485,6 +3703,8 @@ def _split_names(raw: str) -> List[str]:
 async def cmd_ban(interaction: discord.Interaction, spieler: str, grund: str = "Kein Grund angegeben"):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer()
 
     names = _split_names(spieler)
@@ -3541,6 +3761,8 @@ async def cmd_ban(interaction: discord.Interaction, spieler: str, grund: str = "
 async def cmd_unban(interaction: discord.Interaction, spieler: str):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer()
 
     names = _split_names(spieler)
@@ -3589,6 +3811,8 @@ async def cmd_unban(interaction: discord.Interaction, spieler: str):
 async def cmd_banlist(interaction: discord.Interaction):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction):
+        return
     await interaction.response.defer(ephemeral=True)
 
     try:
@@ -3692,6 +3916,8 @@ async def cmd_positions(interaction: discord.Interaction):
 async def cmd_search(interaction: discord.Interaction, name: str):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction, need_ftp=True):
+        return
     await interaction.response.defer(ephemeral=True)
 
     log_dir = cfg.config.get("ftp_log_dir")
@@ -3730,6 +3956,8 @@ async def cmd_search(interaction: discord.Interaction, name: str):
 async def cmd_ftp_scan(interaction: discord.Interaction):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction, need_ftp=True):
+        return
     await interaction.response.defer(ephemeral=True)
 
     # Pfade zurücksetzen damit discover_paths nicht überspringt
@@ -3766,6 +3994,8 @@ async def cmd_ftp_scan(interaction: discord.Interaction):
 async def cmd_raw_log(interaction: discord.Interaction, zeilen: int = 20):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction, need_ftp=True):
+        return
     await interaction.response.defer(ephemeral=True)
 
     log_dir = cfg.config.get("ftp_log_dir")
@@ -3810,6 +4040,8 @@ async def cmd_raw_log(interaction: discord.Interaction, zeilen: int = 20):
 async def cmd_test(interaction: discord.Interaction, zeilen: int = 500):
     if not _is_admin(interaction):
         return await _deny(interaction)
+    if not await _require_nitrado(interaction, need_ftp=True):
+        return
     await interaction.response.defer(ephemeral=True)
 
     # ── 1. Log-Datei lesen ────────────────────────────────────
@@ -4091,7 +4323,10 @@ async def cmd_hilfe(interaction: discord.Interaction):
         "`/zone allowlist add|remove|show <zone> <spieler>` — Spieler in einer Zone "
         "ignorieren / wieder melden / anzeigen"
     ), inline=False)
-    embed.add_field(name="📢 Log-Channel Setup", value=(
+    embed.add_field(name="📢 Setup", value=(
+        "`/setup token <token>` — Nitrado-Token setzen; Server im Dropdown "
+        "auswählen & bestätigen (FTP-Zugang und aktive Karte werden "
+        "automatisch erkannt)\n"
         "`/setup feeds <feed> #channel` — Feed-Channel per Dropdown setzen "
         "(killfeed, damagefeed, joinleave, suicide, chat, adminlog, envdeath, "
         "vehiclecrash, basebuild, loot, connecting, shop_log, economy_log, "
@@ -7859,6 +8094,40 @@ def _cached_ftp_available(reason: str) -> bool:
     return False
 
 
+def _apply_gameserver_info(info: Dict) -> None:
+    """Schreibt FTP-Zugang, aktuelle Karte und (falls leer) Server-IP/Query-Port
+    aus den Nitrado-Gameserver-Infos in cfg.config. Speichert NICHT selbst."""
+    ftp = NitradoAPI.extract_ftp_credentials(info)
+    if ftp:
+        # Immer überschreiben – fängt von Nitrado geänderte Passwörter ab
+        cfg.config["ftp_host"]     = ftp["host"]
+        cfg.config["ftp_port"]     = ftp["port"]
+        cfg.config["ftp_user"]     = ftp["user"]
+        cfg.config["ftp_password"] = ftp["password"]
+        log.info(f"[NITRADO] ✅ FTP-Zugang automatisch erkannt: "
+                 f"{ftp['user']}@{ftp['host']}:{ftp['port']}")
+    else:
+        log.warning("[NITRADO] ⚠️ Keine FTP-Zugangsdaten in den "
+                    "Gameserver-Infos gefunden.")
+
+    detected_map = NitradoAPI.extract_map(info)
+    if detected_map and detected_map != cfg.config.get("map_name"):
+        log.info(f"[NITRADO] 🗺️ Aktuelle Karte erkannt: {detected_map} "
+                 f"(vorher: {cfg.config.get('map_name')})")
+        cfg.config["map_name"] = detected_map
+
+    # Bonus: Server-IP/Query-Port nur befüllen, wenn noch nicht gesetzt
+    if not cfg.config.get("server_ip") and info.get("ip"):
+        cfg.config["server_ip"] = str(info["ip"])
+        qport = (info.get("query") or {}).get("connect_port") or info.get("query_port")
+        if qport:
+            try:
+                cfg.config["query_port"] = int(qport)
+            except (TypeError, ValueError):
+                pass
+        log.info(f"[NITRADO] Server-IP automatisch gesetzt: {info['ip']}")
+
+
 async def auto_detect_from_nitrado() -> bool:
     """Erkennt service_id, FTP-Zugangsdaten und die aktuelle Karte über den
     Nitrado-Token und speichert sie in config.json. Gibt True zurück, wenn
@@ -7889,36 +8158,7 @@ async def auto_detect_from_nitrado() -> bool:
             return _cached_ftp_available(
                 f"Nitrado-API nicht erreichbar (Service {api.service_id})")
 
-        ftp = NitradoAPI.extract_ftp_credentials(info)
-        if ftp:
-            # Immer überschreiben – fängt von Nitrado geänderte Passwörter ab
-            cfg.config["ftp_host"]     = ftp["host"]
-            cfg.config["ftp_port"]     = ftp["port"]
-            cfg.config["ftp_user"]     = ftp["user"]
-            cfg.config["ftp_password"] = ftp["password"]
-            log.info(f"[NITRADO] ✅ FTP-Zugang automatisch erkannt: "
-                     f"{ftp['user']}@{ftp['host']}:{ftp['port']}")
-        else:
-            log.warning("[NITRADO] ⚠️ Keine FTP-Zugangsdaten in den "
-                        "Gameserver-Infos gefunden.")
-
-        detected_map = NitradoAPI.extract_map(info)
-        if detected_map and detected_map != cfg.config.get("map_name"):
-            log.info(f"[NITRADO] 🗺️ Aktuelle Karte erkannt: {detected_map} "
-                     f"(vorher: {cfg.config.get('map_name')})")
-            cfg.config["map_name"] = detected_map
-
-        # Bonus: Server-IP/Query-Port nur befüllen, wenn noch nicht gesetzt
-        if not cfg.config.get("server_ip") and info.get("ip"):
-            cfg.config["server_ip"] = str(info["ip"])
-            qport = (info.get("query") or {}).get("connect_port") or info.get("query_port")
-            if qport:
-                try:
-                    cfg.config["query_port"] = int(qport)
-                except (TypeError, ValueError):
-                    pass
-            log.info(f"[NITRADO] Server-IP automatisch gesetzt: {info['ip']}")
-
+        _apply_gameserver_info(info)
         cfg.save_config()
 
         if all(str(cfg.config.get(k) or "").strip()
@@ -7958,27 +8198,29 @@ def main():
             print(f"   → {field}")
         print()
         print(f"   Die Datei '{CONFIG_FILE}' wurde automatisch erstellt.")
-        print("   Es werden nur bot_token, nitrado_token und guild_ids benötigt –")
-        print("   Service-ID, FTP-Zugang und Karte erkennt der Bot automatisch.")
+        print("   Es werden nur bot_token und guild_ids benötigt – die Nitrado-")
+        print("   Anbindung richtest du danach im Discord mit /setup token ein.")
         print()
         sys.exit(1)
 
-    print("🔎 Erkenne Nitrado-Server (Service-ID, FTP-Zugang, Karte)...")
-    if not asyncio.run(auto_detect_from_nitrado()):
+    if cfg.has_nitrado_token():
+        print("🔎 Erkenne Nitrado-Server (Service-ID, FTP-Zugang, Karte)...")
+        if not asyncio.run(auto_detect_from_nitrado()):
+            print()
+            print("⚠️  NITRADO-AUTO-ERKENNUNG FEHLGESCHLAGEN!")
+            print("   Der Bot startet trotzdem – richte die Nitrado-Anbindung im")
+            print("   Discord (neu) ein: /setup token <dein-nitrado-token>")
+            print()
+    else:
+        print("ℹ️  Noch kein Nitrado-Token gesetzt – der Bot startet ohne")
+        print("   Nitrado-Anbindung. Richte ihn im Discord ein:")
+        print("   /setup token <dein-nitrado-token> → Server im Dropdown auswählen")
+        print("   → bestätigen. FTP-Zugang & Karte werden automatisch erkannt.")
         print()
-        print("❌ AUTO-ERKENNUNG FEHLGESCHLAGEN!")
-        print("   Über den Nitrado-Token konnte kein DayZ-Server gefunden werden und")
-        print("   es sind keine gespeicherten Zugangsdaten aus einem früheren Start")
-        print(f"   in '{CONFIG_FILE}' vorhanden.")
-        print("   → Prüfe den nitrado_token (Nitrado → Benutzereinstellungen →")
-        print("     API-Schlüssel, Long-Life-Token) und starte den Bot neu.")
-        print("   → Bei mehreren Servern kann service_id manuell gesetzt werden.")
-        print()
-        sys.exit(1)
 
     print(f"✅ Konfiguration geladen")
-    print(f"   Service-ID:     {cfg.config.get('service_id')} (automatisch erkannt)")
-    print(f"   FTP-Host:       {cfg.config.get('ftp_host')} (automatisch erkannt)")
+    print(f"   Service-ID:     {cfg.config.get('service_id') or '(per /setup token einrichten)'}")
+    print(f"   FTP-Host:       {cfg.config.get('ftp_host') or '(per /setup token einrichten)'}")
     print(f"   Karte:          {cfg.config.get('map_name', 'ChernarusPlus')}")
     print(f"   Log-Verzeichnis:{cfg.config.get('ftp_log_dir') or '(wird automatisch gesucht)'}")
     print(f"   Server-IP:      {cfg.config.get('server_ip') or '(nicht gesetzt)'}")
