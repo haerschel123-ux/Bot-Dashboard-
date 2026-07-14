@@ -39,6 +39,17 @@ from typing import Optional, Dict, List, Tuple, Any
 from zoneinfo import ZoneInfo
 
 
+def _berlin_tz():
+    """Zeitzone Europe/Berlin – mit Fallback, falls die IANA-Zeitzonendaten
+    fehlen (z. B. Windows ohne installiertes tzdata-Paket). Verhindert, dass
+    der Ankündigungs-Scheduler mit ZoneInfoNotFoundError abstürzt."""
+    try:
+        return ZoneInfo("Europe/Berlin")
+    except Exception:
+        # Notfall-Fallback ohne IANA-DB: lokale Systemzeitzone, sonst UTC.
+        return datetime.now().astimezone().tzinfo or timezone.utc
+
+
 # ══════════════════════════════════════════════════════════════
 #  SCHRITT 1 – Automatische Abhängigkeits-Installation
 # ══════════════════════════════════════════════════════════════
@@ -47,6 +58,9 @@ def _install_deps():
         "discord": "discord.py>=2.3.0",
         "aiohttp":  "aiohttp>=3.9.0",
         "requests": "requests>=2.31.0",
+        # Windows (und andere Systeme ohne IANA-Zeitzonen-DB) brauchen tzdata,
+        # sonst schlägt ZoneInfo("Europe/Berlin") fehl (Ankündigungen crashen).
+        "tzdata":   "tzdata>=2024.1",
     }
     missing = [pip for mod, pip in required.items() if not _can_import(mod)]
     if missing:
@@ -4991,7 +5005,7 @@ def get_next_send_datetime(ann: dict) -> datetime:
     Berechnet den nächsten Sendezeitpunkt einer Ankündigung
     als datetime-Objekt (Europe/Berlin).
     """
-    tz = ZoneInfo("Europe/Berlin")
+    tz = _berlin_tz()
     repeat = ann.get("repeat", "weekly")
     last_sent_str = ann.get("last_sent")
     time_str = ann.get("time", "00:00")
@@ -5025,7 +5039,7 @@ def get_next_send_datetime(ann: dict) -> datetime:
 
 def format_countdown(dt: datetime) -> str:
     """Gibt die verbleibende Zeit bis dt als lesbaren String zurück."""
-    now = datetime.now(ZoneInfo("Europe/Berlin"))
+    now = datetime.now(_berlin_tz())
     diff = dt - now
 
     if diff.total_seconds() <= 0:
@@ -5050,7 +5064,7 @@ ann_already_sent = set()
 
 
 async def check_announcements():
-    now = datetime.now(ZoneInfo("Europe/Berlin"))
+    now = datetime.now(_berlin_tz())
 
     day = now.strftime("%A").lower()
     time_str = now.strftime("%H:%M")
