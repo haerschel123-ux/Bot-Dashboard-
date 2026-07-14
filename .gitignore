@@ -1,0 +1,26 @@
+# ─── Secrets & Laufzeitdaten – NICHT committen ───
+config.json
+guilds_config.json
+banlist.json
+whitelist_requests.json
+log_state.json
+announcements.json
+events_recent.json
+
+# Economy-Datenbank & Backups
+economy.db
+economy.db-*
+economy.db.bak-*
+
+# Generierter Shop-Katalog (aus types.xml) & Server-Dateien
+shop_items.json
+types.xml
+
+# Logs / Python
+*.log
+__pycache__/
+*.pyc
+*.pyo
+
+# Test-/Debug-Artefakte
+_smoke_*.png

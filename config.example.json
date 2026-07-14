@@ -1,0 +1,14 @@
+{
+  "_hinweis": "Kopiere diese Datei zu config.json und trage bot_token + guild_ids ein. Alle weiteren Felder werden beim ersten Start automatisch ergänzt. Den Nitrado-Token gibst du NICHT hier ein, sondern im Dashboard (oder per /setup token im Discord) – FTP-Zugang & Karte werden dann automatisch erkannt.",
+
+  "bot_token": "DEIN_DISCORD_BOT_TOKEN",
+  "guild_ids": [111111111111111111],
+
+  "dashboard_enabled": true,
+  "dashboard_host": "0.0.0.0",
+  "dashboard_port": 8080,
+
+  "_dashboard_map_tiles_beispiel": "Optionale Leaflet-Kachel-URLs je Karte, z.B. {\"ChernarusPlus\": \"https://host/tiles/{z}/{x}/{y}.png\"}. Leer lassen = Bild aus dashboard/static/maps/<Karte>.jpg oder schematische Karte mit Ortsnamen.",
+  "dashboard_map_tiles": {},
+  "dashboard_map_sizes": {}
+}

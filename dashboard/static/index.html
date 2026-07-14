@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DayZ Bot Dashboard</title>
+  <link rel="stylesheet" href="/vendor/leaflet.css">
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+
+<!-- ══════════ Onboarding (Token → Server) ══════════ -->
+<div id="onboarding" class="overlay hidden">
+  <div class="onboard-card">
+    <h1>🎮 DayZ Dashboard</h1>
+
+    <div id="ob-step-token" class="ob-step">
+      <p>Gib zuerst deinen <b>Nitrado Long-Life-Token</b> ein
+         (Nitrado → Benutzereinstellungen → API-Schlüssel).</p>
+      <input id="ob-token" type="password" placeholder="Nitrado-Token" autocomplete="off">
+      <button id="ob-token-btn" class="btn primary">Token prüfen &amp; bestätigen</button>
+      <div id="ob-token-err" class="err"></div>
+    </div>
+
+    <div id="ob-step-server" class="ob-step hidden">
+      <p>Token akzeptiert. Wähle den Server, mit dem der Bot arbeiten soll –
+         Karte, FTP-Zugang &amp; Co. werden automatisch erkannt.</p>
+      <select id="ob-server"></select>
+      <button id="ob-server-btn" class="btn primary">Server übernehmen</button>
+      <div id="ob-server-err" class="err"></div>
+      <div id="ob-server-busy" class="muted hidden">⏳ Erkenne Server, Karte &amp; FTP …</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ App-Shell ══════════ -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand">🎮 DayZ Dashboard</div>
+    <div class="status">
+      <span id="status-pill" class="pill">—</span>
+      <span id="status-map" class="pill map">—</span>
+      <span id="status-players" class="pill">—</span>
+    </div>
+    <div class="topbar-actions">
+      <button id="btn-refresh-status" class="btn ghost" title="Status aktualisieren">↻</button>
+      <button id="btn-logout" class="btn ghost">Abmelden</button>
+    </div>
+  </header>
+
+  <div class="body">
+    <nav class="sidebar">
+      <button class="nav" data-view="overview">🏠 Übersicht</button>
+      <button class="nav" data-view="feeds">📡 Feeds</button>
+      <button class="nav" data-view="zones">🛡️ Zones</button>
+      <button class="nav" data-view="autotasks">⏰ Auto-Aufgaben</button>
+      <button class="nav" data-view="shop">🛒 Shop</button>
+      <button class="nav" data-view="map">🗺️ Karte</button>
+      <div class="nav-sep">Mehr</div>
+      <button class="nav" data-view="bans">🔨 Bans</button>
+      <button class="nav" data-view="whitelist">✅ Whitelist</button>
+      <button class="nav" data-view="economy">💰 Economy</button>
+      <button class="nav" data-view="announce">📢 Ankündigungen</button>
+      <button class="nav" data-view="server">🖥️ Server</button>
+    </nav>
+
+    <main id="content">
+      <section data-section="overview" class="view"></section>
+      <section data-section="feeds" class="view hidden"></section>
+      <section data-section="zones" class="view hidden"></section>
+      <section data-section="autotasks" class="view hidden"></section>
+      <section data-section="shop" class="view hidden"></section>
+
+      <!-- Karte: eigener Aufbau mit Filter-Panel -->
+      <section data-section="map" class="view hidden map-view">
+        <div id="map-panel" class="map-panel">
+          <div class="map-panel-head">
+            <span>Filter</span>
+            <button id="map-panel-toggle" class="btn ghost small" title="Ein-/ausklappen">⟨</button>
+          </div>
+          <div id="map-filters" class="map-filters"></div>
+          <div class="map-panel-foot">
+            <label class="chk"><input type="checkbox" id="flt-players" checked> Spieler anzeigen</label>
+            <button id="map-refresh" class="btn ghost small">↻ Aktualisieren</button>
+          </div>
+        </div>
+        <div id="leaflet" class="leaflet"></div>
+        <div id="event-list" class="event-list"></div>
+      </section>
+
+      <section data-section="bans" class="view hidden"></section>
+      <section data-section="whitelist" class="view hidden"></section>
+      <section data-section="economy" class="view hidden"></section>
+      <section data-section="announce" class="view hidden"></section>
+      <section data-section="server" class="view hidden"></section>
+    </main>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="/vendor/leaflet.js"></script>
+<script src="/static/map.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
