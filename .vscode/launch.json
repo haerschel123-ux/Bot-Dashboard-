@@ -1,0 +1,27 @@
+{
+  // VS-Code-Startkonfigurationen. Auswählen im „Run and Debug"-Panel (Strg+Shift+D),
+  // dann F5 drücken.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Nur Dashboard (Vorschau, ohne Discord)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/run_dashboard_local.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {
+        "DASHBOARD_HOST": "127.0.0.1",
+        "PORT": "8080"
+      }
+    },
+    {
+      "name": "Bot + Dashboard (voll, braucht bot_token)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/bot.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    }
+  ]
+}

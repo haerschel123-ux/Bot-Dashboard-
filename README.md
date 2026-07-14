@@ -48,6 +48,31 @@ Beim Start:
 Der Web-Port wird in dieser Reihenfolge bestimmt:
 **Umgebungsvariable `SERVER_PORT` → `PORT` → `config.json` (`dashboard_port`) → 8080**.
 
+## Lokal in VS Code (Entwicklung / Vorschau)
+
+Zum Anschauen und Bearbeiten reicht die **Dashboard-Vorschau ohne Discord** – dafür
+brauchst du **keinen** Discord-Bot-Token:
+
+1. Ordner in **VS Code** öffnen. Beim ersten Öffnen die empfohlene **Python-Erweiterung**
+   installieren (Vorschlag erscheint automatisch, siehe `.vscode/extensions.json`).
+2. Abhängigkeiten installieren:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **F5** drücken (bzw. „Run and Debug", Strg+Shift+D) und eine Konfiguration wählen:
+   - **„Nur Dashboard (Vorschau, ohne Discord)"** – startet `run_dashboard_local.py`
+     auf `http://127.0.0.1:8080`. Zonen, Shop, Karte & Feeds-Konfig funktionieren;
+     Nitrado-Funktionen nach Token-Eingabe im Onboarding. (Live-Channel-/Rollen-Listen
+     sind leer, weil der Bot dabei nicht bei Discord eingeloggt ist.)
+   - **„Bot + Dashboard (voll)"** – startet `bot.py` (braucht `bot_token` in `config.json`).
+
+Alternativ ohne VS Code direkt im Terminal:
+```bash
+python run_dashboard_local.py      # nur Dashboard-Vorschau, http://127.0.0.1:8080
+# oder
+python bot.py                      # Bot + Dashboard (voll)
+```
+
 ## Deployment auf PebbleHost
 
 1. **Dateien hochladen** (dieses Repo) bzw. per Git-Deploy in deinen PebbleHost-Server ziehen.
