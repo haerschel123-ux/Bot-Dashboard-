@@ -8827,17 +8827,14 @@ def run_dashboard_only():
         generate_shop_items_from_types(TYPES_XML_FILE, shop_file)
     catalog.load()
 
-    from dashboard.server import start_dashboard, _resolve_port
+    from dashboard.server import start_dashboard
 
     async def _serve():
-        # start_dashboard bindet das Dashboard an die Bot-Instanz und startet
-        # den Web-Server (dieselbe Funktion wie im Vollbetrieb).
+        # start_dashboard bindet das Dashboard an die Bot-Instanz, startet den
+        # Web-Server (dieselbe Funktion wie im Vollbetrieb) und loggt den
+        # klickbaren Link http://127.0.0.1:<port>.
         await start_dashboard(bot)
-        port = _resolve_port()
-        print()
-        print(f"  🎮 Dashboard läuft:  http://127.0.0.1:{port}")
-        print("  (ohne Discord-Verbindung · Strg+C zum Beenden)")
-        print()
+        print("  (ohne Discord-Verbindung · Strg+C zum Beenden)\n")
         while True:
             await asyncio.sleep(3600)
 

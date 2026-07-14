@@ -183,9 +183,9 @@ async def start_dashboard(bot: Any) -> None:
                   f"und nicht belegt?")
         return
 
-    log.info(f"[DASHBOARD] ✅ gebunden an {bound}:{port}")
-    log.info(f"[DASHBOARD] 🌐 Im Browser über die ÖFFENTLICHE Server-Adresse öffnen: "
-             f"http://<DEINE-SERVER-IP>:{port}  — NICHT 0.0.0.0 oder 127.0.0.1!")
+    log.info(f"[DASHBOARD] ✅ Dashboard läuft:  http://127.0.0.1:{port}")
+    log.info(f"[DASHBOARD] 🌐 Auf einem gehosteten Server (z. B. PebbleHost) stattdessen "
+             f"über die öffentliche Server-IP mit Port {port} öffnen.")
 
 
 async def stop_dashboard() -> None:
