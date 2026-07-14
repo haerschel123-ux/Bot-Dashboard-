@@ -15,11 +15,11 @@
       "name": "Nur Dashboard (UI-Vorschau, ohne Discord)",
       "type": "debugpy",
       "request": "launch",
-      "program": "${workspaceFolder}/run_dashboard_local.py",
+      "program": "${workspaceFolder}/bot.py",
+      "args": ["--dashboard-only"],
       "console": "integratedTerminal",
       "justMyCode": false,
       "env": {
-        "DASHBOARD_HOST": "127.0.0.1",
         "PORT": "8080"
       }
     }

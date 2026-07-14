@@ -8805,5 +8805,51 @@ def main():
     bot.run(cfg.config["bot_token"], log_handler=None)
 
 
+def run_dashboard_only():
+    """Nur das Web-Dashboard starten – OHNE Discord-Login.
+
+    Praktisch für die lokale Vorschau/Entwicklung: das Dashboard läuft gegen
+    dieselben Objekte wie im Vollbetrieb (cfg, catalog, db, Nitrado/FTP nach
+    Token-Eingabe im Onboarding). Nur die Live-Channel-/Rollen-Listen bleiben
+    leer, weil der Bot dabei nicht bei Discord eingeloggt ist.
+
+    Aufruf:  python bot.py --dashboard-only    (oder --no-discord)
+    """
+    print()
+    print("╔══════════════════════════════════════════════════════╗")
+    print("║   DayZ Dashboard – Vorschau (ohne Discord-Login)    ║")
+    print("╚══════════════════════════════════════════════════════╝")
+    print()
+
+    cfg.load_all()
+    shop_file = str(cfg.config.get("shop_items_file") or "shop_items.json")
+    if not os.path.exists(shop_file) and os.path.exists(TYPES_XML_FILE):
+        generate_shop_items_from_types(TYPES_XML_FILE, shop_file)
+    catalog.load()
+
+    from dashboard.server import start_dashboard, _resolve_port
+
+    async def _serve():
+        # start_dashboard bindet das Dashboard an die Bot-Instanz und startet
+        # den Web-Server (dieselbe Funktion wie im Vollbetrieb).
+        await start_dashboard(bot)
+        port = _resolve_port()
+        print()
+        print(f"  🎮 Dashboard läuft:  http://127.0.0.1:{port}")
+        print("  (ohne Discord-Verbindung · Strg+C zum Beenden)")
+        print()
+        while True:
+            await asyncio.sleep(3600)
+
+    try:
+        asyncio.run(_serve())
+    except KeyboardInterrupt:
+        print("\nBeendet.")
+
+
 if __name__ == "__main__":
-    main()
+    _args = [a.lower() for a in sys.argv[1:]]
+    if any(a in ("--dashboard-only", "--dashboard", "--no-discord") for a in _args):
+        run_dashboard_only()
+    else:
+        main()

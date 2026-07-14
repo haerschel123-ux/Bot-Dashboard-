@@ -73,9 +73,10 @@ Wenn du also lokal testen willst, ob das Dashboard den Bot wirklich anspricht un
 
 **Nur schnell die Oberfläche ansehen** (ohne Discord-Token)? Dann die zweite
 Konfiguration **„Nur Dashboard (UI-Vorschau, ohne Discord)"** bzw.
-`python run_dashboard_local.py` nutzen. Damit funktionieren Zonen, Shop, Karte &
+`python bot.py --dashboard-only` nutzen. Damit funktionieren Zonen, Shop, Karte &
 Feeds-Konfig; nur die Live-Channel-/Rollen-Listen bleiben leer, weil der Bot dabei
-nicht bei Discord eingeloggt ist.
+nicht bei Discord eingeloggt ist. (Es gibt nur **eine** Datei – `bot.py` – die je
+nach Startargument den Vollbetrieb oder die Vorschau fährt.)
 
 ## Deployment auf PebbleHost
 
