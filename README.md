@@ -48,30 +48,34 @@ Beim Start:
 Der Web-Port wird in dieser Reihenfolge bestimmt:
 **Umgebungsvariable `SERVER_PORT` → `PORT` → `config.json` (`dashboard_port`) → 8080**.
 
-## Lokal in VS Code (Entwicklung / Vorschau)
+## Lokal in VS Code testen
 
-Zum Anschauen und Bearbeiten reicht die **Dashboard-Vorschau ohne Discord** – dafür
-brauchst du **keinen** Discord-Bot-Token:
+Bot **und** Dashboard laufen im **selben Prozess** und teilen sich dieselben Live-Objekte.
+Wenn du also lokal testen willst, ob das Dashboard den Bot wirklich anspricht und Dinge
+ändert (Zonen, Feeds, Shop, Auto-Restart …), starte den **vollen Bot**:
 
-1. Ordner in **VS Code** öffnen. Beim ersten Öffnen die empfohlene **Python-Erweiterung**
-   installieren (Vorschlag erscheint automatisch, siehe `.vscode/extensions.json`).
+1. Ordner in **VS Code** öffnen, empfohlene **Python-Erweiterung** installieren
+   (Vorschlag erscheint automatisch, siehe `.vscode/extensions.json`).
 2. Abhängigkeiten installieren:
    ```bash
    pip install -r requirements.txt
    ```
-3. **F5** drücken (bzw. „Run and Debug", Strg+Shift+D) und eine Konfiguration wählen:
-   - **„Nur Dashboard (Vorschau, ohne Discord)"** – startet `run_dashboard_local.py`
-     auf `http://127.0.0.1:8080`. Zonen, Shop, Karte & Feeds-Konfig funktionieren;
-     Nitrado-Funktionen nach Token-Eingabe im Onboarding. (Live-Channel-/Rollen-Listen
-     sind leer, weil der Bot dabei nicht bei Discord eingeloggt ist.)
-   - **„Bot + Dashboard (voll)"** – startet `bot.py` (braucht `bot_token` in `config.json`).
+3. `config.json` anlegen (`cp config.example.json config.json`) und deinen
+   **Discord-`bot_token`** + `guild_ids` eintragen. Tipp: nimm einen **Test-Bot**,
+   damit du nicht denselben Token gleichzeitig auf PebbleHost und lokal laufen lässt
+   (zwei Instanzen mit demselben Token trennen sich gegenseitig).
+4. **F5** → **„Bot + Dashboard (voll – steuert den echten Bot)"**
+   (oder im Terminal `python bot.py`).
+5. Browser: `http://127.0.0.1:8080` → Nitrado-Token eingeben → Server wählen.
+   Ab jetzt steuert jede Änderung im Dashboard den **laufenden** Bot direkt:
+   z. B. ein Feed-Channel wird sofort für die Discord-Posts genutzt, eine Zone
+   sofort überwacht, ein „Neustart" ruft direkt die Nitrado-API.
 
-Alternativ ohne VS Code direkt im Terminal:
-```bash
-python run_dashboard_local.py      # nur Dashboard-Vorschau, http://127.0.0.1:8080
-# oder
-python bot.py                      # Bot + Dashboard (voll)
-```
+**Nur schnell die Oberfläche ansehen** (ohne Discord-Token)? Dann die zweite
+Konfiguration **„Nur Dashboard (UI-Vorschau, ohne Discord)"** bzw.
+`python run_dashboard_local.py` nutzen. Damit funktionieren Zonen, Shop, Karte &
+Feeds-Konfig; nur die Live-Channel-/Rollen-Listen bleiben leer, weil der Bot dabei
+nicht bei Discord eingeloggt ist.
 
 ## Deployment auf PebbleHost
 

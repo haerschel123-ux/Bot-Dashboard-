@@ -12,17 +12,23 @@ from .common import body, ok, err
 _TIME_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]\d)$")
 
 
+def _next_run():
+    """Nächster geplanter Restart-Zeitpunkt. Die Funktion ist eine METHODE der
+    Bot-Instanz (nicht des Moduls), daher am Bot-Objekt holen."""
+    fn = getattr(ctx.bot, "_next_scheduled_restart", None)
+    if callable(fn):
+        try:
+            return fn()
+        except Exception:
+            return None
+    return None
+
+
 async def get_auto_restart(request: web.Request) -> web.Response:
     cfg = ctx.cfg
     sched = cfg.config.get("auto_restart_schedule",
                            {"enabled": False, "first_time": "04:00", "interval_hours": 4})
-    nxt = None
-    fn = ctx.g("_next_scheduled_restart")
-    if callable(fn):
-        try:
-            nxt = fn()
-        except Exception:
-            nxt = None
+    nxt = _next_run()
     return ok({
         "schedule": sched,
         "next_run_ts": nxt,
@@ -65,11 +71,4 @@ async def set_auto_restart(request: web.Request) -> web.Response:
     except Exception:
         pass
 
-    nxt = None
-    fn = ctx.g("_next_scheduled_restart")
-    if callable(fn):
-        try:
-            nxt = fn()
-        except Exception:
-            nxt = None
-    return ok({"schedule": sched, "next_run_ts": nxt})
+    return ok({"schedule": sched, "next_run_ts": _next_run()})

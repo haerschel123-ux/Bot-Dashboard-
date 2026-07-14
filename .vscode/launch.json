@@ -4,7 +4,15 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Nur Dashboard (Vorschau, ohne Discord)",
+      "name": "Bot + Dashboard (voll – steuert den echten Bot)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/bot.py",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
+    {
+      "name": "Nur Dashboard (UI-Vorschau, ohne Discord)",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/run_dashboard_local.py",
@@ -14,14 +22,6 @@
         "DASHBOARD_HOST": "127.0.0.1",
         "PORT": "8080"
       }
-    },
-    {
-      "name": "Bot + Dashboard (voll, braucht bot_token)",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/bot.py",
-      "console": "integratedTerminal",
-      "justMyCode": false
     }
   ]
 }
