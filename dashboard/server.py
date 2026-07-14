@@ -126,7 +126,7 @@ def _resolve_port() -> int:
         cfg_port = ctx.cfg.config.get("dashboard_port")
     except Exception:
         cfg_port = None
-    for cand in (cfg_port, os.environ.get("SERVER_PORT"), os.environ.get("PORT")):
+    for cand in (os.environ.get("SERVER_PORT"), os.environ.get("PORT"), cfg_port):
         if cand:
             try:
                 return int(cand)
@@ -148,13 +148,44 @@ async def start_dashboard(bot: Any) -> None:
         return
 
     port = _resolve_port()
-    host = ctx.cfg.config.get("dashboard_host", "0.0.0.0")
+    # Bind-Host: den konfigurierten Host zuerst versuchen, aber IMMER auf
+    # 0.0.0.0 zurückfallen. Eine öffentliche IP (z. B. die Panel-Adresse) lässt
+    # sich im Container in der Regel NICHT direkt binden
+    # ("cannot assign requested address"); 0.0.0.0 bindet alle Interfaces und
+    # wird vom Host (PebbleHost/Pterodactyl) nach außen weitergereicht.
+    cfg_host = str(ctx.cfg.config.get("dashboard_host", "0.0.0.0") or "0.0.0.0").strip()
+    hosts = []
+    for hc in (cfg_host, "0.0.0.0"):
+        if hc and hc not in hosts:
+            hosts.append(hc)
+
     app = build_app()
     _runner = web.AppRunner(app, access_log=None)
     await _runner.setup()
-    site = web.TCPSite(_runner, host, port)
-    await site.start()
-    log.info(f"[DASHBOARD] ✅ läuft auf http://{host}:{port}")
+
+    bound, last_err = None, None
+    for host in hosts:
+        try:
+            site = web.TCPSite(_runner, host, port)
+            await site.start()
+            bound = host
+            break
+        except OSError as e:
+            last_err = e
+            hint = " Versuche 0.0.0.0 …" if host != "0.0.0.0" else ""
+            log.warning(f"[DASHBOARD] Bind auf {host}:{port} fehlgeschlagen ({e}).{hint}")
+
+    if bound is None:
+        await _runner.cleanup()
+        _runner = None
+        log.error(f"[DASHBOARD] Konnte auf Port {port} nicht binden: {last_err}. "
+                  f"Dashboard ist AUS. Ist der Port vom Host freigegeben (SERVER_PORT) "
+                  f"und nicht belegt?")
+        return
+
+    log.info(f"[DASHBOARD] ✅ gebunden an {bound}:{port}")
+    log.info(f"[DASHBOARD] 🌐 Im Browser über die ÖFFENTLICHE Server-Adresse öffnen: "
+             f"http://<DEINE-SERVER-IP>:{port}  — NICHT 0.0.0.0 oder 127.0.0.1!")
 
 
 async def stop_dashboard() -> None:

@@ -63,6 +63,25 @@ Der Web-Port wird in dieser Reihenfolge bestimmt:
 > Dashboard nur intern erreichbar. In dem Fall einen Tarif mit freiem Port bzw.
 > einen kleinen VPS nutzen.
 
+## Fehlerbehebung: Dashboard „nicht erreichbar“
+
+- **`0.0.0.0` oder `127.0.0.1` im Browser → „Verbindung abgelehnt“:** Das sind
+  Adressen deines **eigenen Geräts**, nicht des Servers. Öffne das Dashboard immer
+  über die **öffentliche Server-Adresse** aus dem Panel, z. B.
+  `http://45.143.198.35:<Port>`. Das Log-Zeile `gebunden an 0.0.0.0:<Port>` bedeutet
+  nur, dass der Server auf allen Interfaces lauscht – **nicht**, dass du `0.0.0.0`
+  eintippen sollst.
+- **Welchen Port?** Nimm den vom Host **zugewiesenen/freigegebenen Port**
+  (bei PebbleHost/Pterodactyl die Umgebungsvariable `SERVER_PORT`, sichtbar im
+  Panel unter „Network“/„Allocation“). Dieser Port hat **Vorrang** vor
+  `dashboard_port` in der `config.json`. Trage in der config am besten **keinen**
+  eigenen Port ein, dann wird automatisch der richtige genommen.
+- **`[DASHBOARD] Start fehlgeschlagen: cannot assign requested address`:** Du hast
+  `dashboard_host` in der `config.json` auf eine **öffentliche IP** gesetzt – die
+  kann der Container nicht binden. Lass `dashboard_host` auf `0.0.0.0` (oder
+  entferne den Schlüssel). Der Bot fällt inzwischen automatisch auf `0.0.0.0`
+  zurück, falls ein nicht bindbarer Host konfiguriert ist.
+
 ## Kartenbilder (interaktive Karte)
 
 Die Karte erkennt automatisch die aktive Map (Chernarus, Livonia, Sakhal) und zeigt
