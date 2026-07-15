@@ -18,6 +18,16 @@ DEFAULT_MAP_SIZES = {
     "Sakhal": 15360,
 }
 
+# Kanonischer Map-Name → Ordner der öffentlichen Kachelquelle (xam.nu).
+# Die Kacheln lädt der Browser direkt – unabhängig von der Host-Netzpolicy.
+_XAM_FOLDER = {
+    "ChernarusPlus": "chernarusplus",
+    "Livonia": "livonia",
+    "Sakhal": "sakhal",
+}
+_XAM_TEMPLATE = "https://static.xam.nu/dayz/maps/{folder}/1.27/topographic/{{z}}/{{x}}/{{y}}.webp"
+TILE_MAX_NATIVE_ZOOM = 7
+
 _POS_RE = re.compile(r"(-?\d+(?:\.\d+)?)")
 
 
@@ -25,6 +35,15 @@ def _world_size(map_name: str) -> int:
     sizes = dict(DEFAULT_MAP_SIZES)
     sizes.update(ctx.cfg.config.get("dashboard_map_sizes", {}) or {})
     return int(sizes.get(map_name, 15360))
+
+
+def _tile_url(map_name: str) -> str:
+    """Kachel-URL je Karte: config-Override → xam.nu-Default → '' (dann Fallback)."""
+    override = (ctx.cfg.config.get("dashboard_map_tiles") or {}).get(map_name)
+    if override:
+        return str(override)
+    folder = _XAM_FOLDER.get(map_name)
+    return _XAM_TEMPLATE.format(folder=folder) if folder else ""
 
 
 def _locations(map_name: str):
@@ -36,12 +55,12 @@ def _locations(map_name: str):
 async def map_meta(request: web.Request) -> web.Response:
     cfg = ctx.cfg
     map_name = cfg.config.get("map_name", "ChernarusPlus")
-    tiles = (cfg.config.get("dashboard_map_tiles") or {}).get(map_name) or ""
     return ok({
         "map_name": map_name,
         "world_size": _world_size(map_name),
-        "tile_url": tiles,          # optionales XYZ-Template ({z}/{x}/{y})
-        "image": f"/maps/{map_name}.jpg",  # optionales Bild (ImageOverlay), falls vorhanden
+        "tile_url": _tile_url(map_name),      # XYZ-Template ({z}/{x}/{y}), Browser lädt es
+        "tile_max_native_zoom": TILE_MAX_NATIVE_ZOOM,
+        "image": f"/maps/{map_name}.jpg",     # optionales eigenes Bild (ImageOverlay), falls vorhanden
         "locations": _locations(map_name),
         "izurvive": f"https://www.izurvive.com/?m={map_name}",
     })

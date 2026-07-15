@@ -115,20 +115,25 @@ nach Startargument den Vollbetrieb oder die Vorschau fährt.)
 ## Kartenbilder (interaktive Karte)
 
 Die Karte erkennt automatisch die aktive Map (Chernarus, Livonia, Sakhal) und zeigt
-den Hintergrund in dieser Reihenfolge:
+**standardmäßig das echte Kartenbild** an. Reihenfolge:
 
-1. **Kachel-URL** aus `config.json → dashboard_map_tiles`, z. B.
+1. **Echte Kacheln (Standard):** Werden passend zur erkannten Karte automatisch von
+   einer öffentlichen DayZ-Kachelquelle geladen – **vom Browser**, unabhängig von der
+   Netzwerkpolicy des Hosts. Spielkoordinaten, Ortsnamen, Spieler und Zonen liegen
+   exakt auf der Karte (Norden oben). Zoomen/Verschieben inklusive.
+2. **Eigene Kachel-URL** (optional) via `config.json → dashboard_map_tiles`, z. B.
    ```json
    "dashboard_map_tiles": { "ChernarusPlus": "https://dein-tileserver/{z}/{x}/{y}.png" }
    ```
-2. **Eigenes Bild**: lege eine Datei `dashboard/static/maps/<Karte>.jpg` ab
-   (`ChernarusPlus.jpg`, `Livonia.jpg`, `Sakhal.jpg`). Sie wird passgenau über die
-   Weltgröße gelegt.
-3. **Schematische Karte** mit echten Ortsnamen (Fallback) – funktioniert immer,
-   auch ohne Bild/Internet.
+   (überschreibt die Standard-Quelle für diese Karte).
+3. **Eigenes Bild** (offline) unter `dashboard/static/maps/<Karte>.jpg`
+   (`ChernarusPlus.jpg`, `Livonia.jpg`, `Sakhal.jpg`) – wird genutzt, falls die
+   Kacheln mal nicht laden.
+4. **Schematische Karte** mit Ortsnamen (letzter Fallback) – funktioniert immer,
+   auch komplett offline.
 
-So bleibt die Karte immer nutzbar; für „echte“ Optik reicht es, ein Kartenbild in den
-`maps`-Ordner zu legen oder eine Kachel-URL einzutragen.
+So ist die Karte sofort mit echtem Kartenbild nutzbar und bleibt auch ohne Internet
+bedienbar.
 
 ## Sicherheit
 
