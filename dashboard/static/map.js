@@ -99,17 +99,34 @@
     img.src = meta.image;
   }
 
-  function drawLabels(locations) {
-    if (labelLayer) map.removeLayer(labelLayer);
+  // Ortslabels: klein und zoomabhängig – weit herausgezoomt nur die Städte,
+  // beim Hineinzoomen nach und nach alle Orte (Dörfer, Camps, Hügel …).
+  var allLocations = [];
+  var _labelZoomHooked = false;
+  var LABEL_MIN_ZOOM = { capital: 0, city: 1, village: 2, camp: 3, ruin: 3,
+                         marine: 3, local: 4, hill: 4 };
+
+  function renderLabels() {
+    if (!map) return;
+    if (labelLayer) { map.removeLayer(labelLayer); }
     labelLayer = L.layerGroup();
-    (locations || []).forEach(function (loc) {
-      L.circleMarker(g2ll(loc.x, loc.z), { radius: 2, color: "#cfe6a3",
-        fillColor: "#cfe6a3", fillOpacity: 1, weight: 1 }).addTo(labelLayer);
+    var zoom = map.getZoom();
+    allLocations.forEach(function (loc) {
+      var t = loc.t || "local";
+      if (zoom < (LABEL_MIN_ZOOM[t] !== undefined ? LABEL_MIN_ZOOM[t] : 5)) return;
+      L.circleMarker(g2ll(loc.x, loc.z), { radius: 1.5, color: "#cfe6a3",
+        fillColor: "#cfe6a3", fillOpacity: .9, weight: 1, interactive: false }).addTo(labelLayer);
       L.marker(g2ll(loc.x, loc.z), { icon: L.divIcon({
-        className: "map-marker-label", html: loc.name,
-        iconSize: [0, 0], iconAnchor: [-6, 8] }), interactive: false }).addTo(labelLayer);
+        className: "map-marker-label lbl-" + t, html: loc.name,
+        iconSize: [0, 0], iconAnchor: [-5, 7] }), interactive: false }).addTo(labelLayer);
     });
     labelLayer.addTo(map);
+  }
+
+  function drawLabels(locations) {
+    allLocations = locations || [];
+    if (!_labelZoomHooked) { map.on("zoomend", renderLabels); _labelZoomHooked = true; }
+    renderLabels();
   }
 
   var DZMap = {

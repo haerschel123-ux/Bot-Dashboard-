@@ -1,0 +1,1213 @@
+{
+ "map": "ChernarusPlus",
+ "world_size": 15360,
+ "source": "dayz.xam.nu 1.29-2",
+ "locations": [
+  {
+   "name": "Chernogorsk",
+   "x": 6778.6,
+   "z": 2321.8,
+   "t": "capital"
+  },
+  {
+   "name": "Novodmitrovsk",
+   "x": 11339.8,
+   "z": 14391.0,
+   "t": "capital"
+  },
+  {
+   "name": "Novoselki",
+   "x": 6115.9,
+   "z": 3256.4,
+   "t": "city"
+  },
+  {
+   "name": "Dubovo",
+   "x": 6754.5,
+   "z": 3595.3,
+   "t": "city"
+  },
+  {
+   "name": "Vysotovo",
+   "x": 5701.2,
+   "z": 2556.1,
+   "t": "city"
+  },
+  {
+   "name": "Zelenogorsk",
+   "x": 2796.0,
+   "z": 5166.0,
+   "t": "city"
+  },
+  {
+   "name": "Berezino",
+   "x": 12372.4,
+   "z": 9761.0,
+   "t": "city"
+  },
+  {
+   "name": "Elektrozavodsk",
+   "x": 10286.7,
+   "z": 1992.8,
+   "t": "city"
+  },
+  {
+   "name": "Novaya Petrovka",
+   "x": 3477.2,
+   "z": 12931.2,
+   "t": "city"
+  },
+  {
+   "name": "Gorka",
+   "x": 9524.0,
+   "z": 8945.0,
+   "t": "city"
+  },
+  {
+   "name": "Solnechny",
+   "x": 13487.7,
+   "z": 6225.9,
+   "t": "city"
+  },
+  {
+   "name": "Stary Sobor",
+   "x": 6114.0,
+   "z": 7849.0,
+   "t": "city"
+  },
+  {
+   "name": "Vybor",
+   "x": 3909.8,
+   "z": 9019.6,
+   "t": "city"
+  },
+  {
+   "name": "Severograd",
+   "x": 8168.5,
+   "z": 12573.6,
+   "t": "city"
+  },
+  {
+   "name": "Bor",
+   "x": 3316.4,
+   "z": 4071.0,
+   "t": "village"
+  },
+  {
+   "name": "Svetloyarsk",
+   "x": 13989.7,
+   "z": 13263.8,
+   "t": "city"
+  },
+  {
+   "name": "Krasnostav",
+   "x": 11203.2,
+   "z": 12340.8,
+   "t": "city"
+  },
+  {
+   "name": "Chernaya Polyana",
+   "x": 12158.5,
+   "z": 13770.2,
+   "t": "city"
+  },
+  {
+   "name": "Polyana",
+   "x": 10794.0,
+   "z": 8160.0,
+   "t": "city"
+  },
+  {
+   "name": "Tulga",
+   "x": 12768.0,
+   "z": 4384.0,
+   "t": "village"
+  },
+  {
+   "name": "Msta",
+   "x": 11333.8,
+   "z": 5421.4,
+   "t": "village"
+  },
+  {
+   "name": "Staroye",
+   "x": 10212.5,
+   "z": 5385.0,
+   "t": "village"
+  },
+  {
+   "name": "Shakovka",
+   "x": 9728.6,
+   "z": 6567.3,
+   "t": "village"
+  },
+  {
+   "name": "Dolina",
+   "x": 11285.2,
+   "z": 6633.6,
+   "t": "village"
+  },
+  {
+   "name": "Orlovets",
+   "x": 12250.0,
+   "z": 7253.0,
+   "t": "village"
+  },
+  {
+   "name": "Novy Sobor",
+   "x": 7123.6,
+   "z": 7774.6,
+   "t": "village"
+  },
+  {
+   "name": "Kabanino",
+   "x": 5300.7,
+   "z": 8645.9,
+   "t": "village"
+  },
+  {
+   "name": "Mogilevka",
+   "x": 7650.4,
+   "z": 5096.5,
+   "t": "village"
+  },
+  {
+   "name": "Nadezhdino",
+   "x": 5894.0,
+   "z": 4780.0,
+   "t": "village"
+  },
+  {
+   "name": "Guglovo",
+   "x": 8445.0,
+   "z": 6579.0,
+   "t": "village"
+  },
+  {
+   "name": "Kamyshovo",
+   "x": 12170.0,
+   "z": 3458.0,
+   "t": "village"
+  },
+  {
+   "name": "Pusta",
+   "x": 9197.0,
+   "z": 3873.0,
+   "t": "village"
+  },
+  {
+   "name": "Dubrovka",
+   "x": 10324.3,
+   "z": 9888.2,
+   "t": "village"
+  },
+  {
+   "name": "Vyshnaya Dubrovka (verkhnaya Dubrovka)",
+   "x": 9926.8,
+   "z": 10468.9,
+   "t": "village"
+  },
+  {
+   "name": "Khelm",
+   "x": 12329.3,
+   "z": 10771.0,
+   "t": "village"
+  },
+  {
+   "name": "Olsha",
+   "x": 13402.0,
+   "z": 12898.0,
+   "t": "village"
+  },
+  {
+   "name": "Gvozdno",
+   "x": 8644.8,
+   "z": 11934.1,
+   "t": "village"
+  },
+  {
+   "name": "Grishino",
+   "x": 5980.0,
+   "z": 10257.0,
+   "t": "village"
+  },
+  {
+   "name": "Rogovo",
+   "x": 4802.0,
+   "z": 6748.0,
+   "t": "village"
+  },
+  {
+   "name": "Pogorevka",
+   "x": 4445.0,
+   "z": 6322.0,
+   "t": "village"
+  },
+  {
+   "name": "Pustoshka",
+   "x": 3137.9,
+   "z": 7890.9,
+   "t": "village"
+  },
+  {
+   "name": "Kozlovka",
+   "x": 4402.0,
+   "z": 4736.0,
+   "t": "village"
+  },
+  {
+   "name": "Karmanovka",
+   "x": 12700.6,
+   "z": 14691.3,
+   "t": "village"
+  },
+  {
+   "name": "Balota",
+   "x": 4527.6,
+   "z": 2465.3,
+   "t": "village"
+  },
+  {
+   "name": "Komarovo",
+   "x": 3702.0,
+   "z": 2440.0,
+   "t": "village"
+  },
+  {
+   "name": "Kamenka",
+   "x": 1981.0,
+   "z": 2207.0,
+   "t": "village"
+  },
+  {
+   "name": "Myshkino",
+   "x": 2048.0,
+   "z": 7258.0,
+   "t": "village"
+  },
+  {
+   "name": "Pavlovo",
+   "x": 1694.0,
+   "z": 3858.6,
+   "t": "village"
+  },
+  {
+   "name": "Lopatino",
+   "x": 2801.0,
+   "z": 10029.0,
+   "t": "village"
+  },
+  {
+   "name": "Vyshnoye",
+   "x": 6629.0,
+   "z": 6051.0,
+   "t": "village"
+  },
+  {
+   "name": "Prigorodki",
+   "x": 7760.0,
+   "z": 3336.0,
+   "t": "village"
+  },
+  {
+   "name": "Drozhino",
+   "x": 3374.0,
+   "z": 4861.0,
+   "t": "village"
+  },
+  {
+   "name": "Sosnovka",
+   "x": 2556.0,
+   "z": 6307.0,
+   "t": "village"
+  },
+  {
+   "name": "Nizhnoe (nizhnee)",
+   "x": 12824.9,
+   "z": 8097.7,
+   "t": "village"
+  },
+  {
+   "name": "Pulkovo",
+   "x": 5015.0,
+   "z": 5607.0,
+   "t": "village"
+  },
+  {
+   "name": "Berezhki",
+   "x": 15020.0,
+   "z": 13905.0,
+   "t": "village"
+  },
+  {
+   "name": "Turovo",
+   "x": 13630.0,
+   "z": 14146.0,
+   "t": "village"
+  },
+  {
+   "name": "Belaya Polyana",
+   "x": 14166.0,
+   "z": 14968.0,
+   "t": "village"
+  },
+  {
+   "name": "Dobroye",
+   "x": 12996.0,
+   "z": 15066.0,
+   "t": "village"
+  },
+  {
+   "name": "Nagornoye",
+   "x": 9286.0,
+   "z": 14677.0,
+   "t": "village"
+  },
+  {
+   "name": "Svergino",
+   "x": 9493.5,
+   "z": 13875.3,
+   "t": "village"
+  },
+  {
+   "name": "Ratnoye",
+   "x": 6195.9,
+   "z": 12761.8,
+   "t": "village"
+  },
+  {
+   "name": "Kamensk",
+   "x": 6748.7,
+   "z": 14430.0,
+   "t": "village"
+  },
+  {
+   "name": "Krasnoye",
+   "x": 6411.4,
+   "z": 15030.0,
+   "t": "village"
+  },
+  {
+   "name": "Stary Yar",
+   "x": 4987.9,
+   "z": 14993.0,
+   "t": "village"
+  },
+  {
+   "name": "Polesovo",
+   "x": 5955.7,
+   "z": 13558.0,
+   "t": "village"
+  },
+  {
+   "name": "Tisy",
+   "x": 3441.6,
+   "z": 14799.5,
+   "t": "village"
+  },
+  {
+   "name": "Topolniki",
+   "x": 2913.7,
+   "z": 12366.4,
+   "t": "village"
+  },
+  {
+   "name": "Zaprudnoye",
+   "x": 5214.0,
+   "z": 12792.0,
+   "t": "village"
+  },
+  {
+   "name": "Sinystok",
+   "x": 1538.3,
+   "z": 11904.6,
+   "t": "village"
+  },
+  {
+   "name": "Vavilovo",
+   "x": 2263.0,
+   "z": 11103.0,
+   "t": "village"
+  },
+  {
+   "name": "Kumyrna",
+   "x": 8300.0,
+   "z": 6054.0,
+   "t": "village"
+  },
+  {
+   "name": "Kalinovka",
+   "x": 7448.0,
+   "z": 13406.0,
+   "t": "village"
+  },
+  {
+   "name": "Bogatyrka",
+   "x": 1453.6,
+   "z": 8870.9,
+   "t": "village"
+  },
+  {
+   "name": "Svyatoy Roman Ski Resort",
+   "x": 638.0,
+   "z": 11667.0,
+   "t": "local"
+  },
+  {
+   "name": "Skvsch Biathlon Arena",
+   "x": 357.0,
+   "z": 11142.0,
+   "t": "local"
+  },
+  {
+   "name": "Zvir",
+   "x": 577.3,
+   "z": 5317.4,
+   "t": "village"
+  },
+  {
+   "name": "Zabolotye",
+   "x": 1256.9,
+   "z": 9993.3,
+   "t": "village"
+  },
+  {
+   "name": "Galkino",
+   "x": 1102.7,
+   "z": 8798.3,
+   "t": "local"
+  },
+  {
+   "name": "Arsenovo",
+   "x": 8509.7,
+   "z": 13918.6,
+   "t": "camp"
+  },
+  {
+   "name": "Stroytel",
+   "x": 7017.6,
+   "z": 4365.2,
+   "t": "camp"
+  },
+  {
+   "name": "Romashka",
+   "x": 8177.6,
+   "z": 10980.3,
+   "t": "camp"
+  },
+  {
+   "name": "Kometa",
+   "x": 10271.7,
+   "z": 3558.2,
+   "t": "camp"
+  },
+  {
+   "name": "Druzbha",
+   "x": 11437.0,
+   "z": 10695.0,
+   "t": "camp"
+  },
+  {
+   "name": "Nadezhda",
+   "x": 7280.0,
+   "z": 7014.4,
+   "t": "camp"
+  },
+  {
+   "name": "Youth Pioneer",
+   "x": 11155.8,
+   "z": 7074.1,
+   "t": "camp"
+  },
+  {
+   "name": "Proud Chernarus",
+   "x": 3199.6,
+   "z": 6174.9,
+   "t": "camp"
+  },
+  {
+   "name": "Shkolnik",
+   "x": 14856.5,
+   "z": 14571.0,
+   "t": "camp"
+  },
+  {
+   "name": "Pobeda",
+   "x": 3703.4,
+   "z": 14876.4,
+   "t": "camp"
+  },
+  {
+   "name": "Metalurg",
+   "x": 1035.4,
+   "z": 6677.4,
+   "t": "camp"
+  },
+  {
+   "name": "Zelenaya Gora",
+   "x": 3767.2,
+   "z": 6010.5,
+   "t": "hill"
+  },
+  {
+   "name": "Dichina",
+   "x": 4618.0,
+   "z": 7821.0,
+   "t": "local"
+  },
+  {
+   "name": "Novy Lug",
+   "x": 9251.0,
+   "z": 11360.0,
+   "t": "local"
+  },
+  {
+   "name": "Starye Luga",
+   "x": 6919.0,
+   "z": 8995.0,
+   "t": "local"
+  },
+  {
+   "name": "Vysota",
+   "x": 6591.6,
+   "z": 3400.0,
+   "t": "hill"
+  },
+  {
+   "name": "Kopyto",
+   "x": 7871.5,
+   "z": 3869.1,
+   "t": "hill"
+  },
+  {
+   "name": "Grubye Skaly",
+   "x": 13115.1,
+   "z": 11900.0,
+   "t": "local"
+  },
+  {
+   "name": "Cherny Les",
+   "x": 9031.0,
+   "z": 7803.0,
+   "t": "local"
+  },
+  {
+   "name": "Altar",
+   "x": 8143.4,
+   "z": 9159.7,
+   "t": "hill"
+  },
+  {
+   "name": "Radio Zenit",
+   "x": 8080.0,
+   "z": 9341.7,
+   "t": "local"
+  },
+  {
+   "name": "Pik Kozlova",
+   "x": 8850.2,
+   "z": 2880.5,
+   "t": "hill"
+  },
+  {
+   "name": "Pustoy Khrebet",
+   "x": 10890.0,
+   "z": 5665.0,
+   "t": "local"
+  },
+  {
+   "name": "Bashnya",
+   "x": 4178.3,
+   "z": 11771.2,
+   "t": "hill"
+  },
+  {
+   "name": "Veresnik",
+   "x": 4440.2,
+   "z": 8070.5,
+   "t": "hill"
+  },
+  {
+   "name": "Kurgan",
+   "x": 3368.5,
+   "z": 5296.9,
+   "t": "hill"
+  },
+  {
+   "name": "Kustryk",
+   "x": 4912.9,
+   "z": 5063.5,
+   "t": "hill"
+  },
+  {
+   "name": "Vetryanaya Gora",
+   "x": 3892.7,
+   "z": 4200.6,
+   "t": "hill"
+  },
+  {
+   "name": "Kalmyk",
+   "x": 6903.8,
+   "z": 4919.7,
+   "t": "hill"
+  },
+  {
+   "name": "Pop Ivan",
+   "x": 6420.3,
+   "z": 6570.7,
+   "t": "hill"
+  },
+  {
+   "name": "Erbenka",
+   "x": 2842.9,
+   "z": 4014.8,
+   "t": "hill"
+  },
+  {
+   "name": "Lesnoykhrebet",
+   "x": 8122.8,
+   "z": 7815.5,
+   "t": "local"
+  },
+  {
+   "name": "Vysokiy Kamen",
+   "x": 8940.2,
+   "z": 4380.5,
+   "t": "hill"
+  },
+  {
+   "name": "Dobry",
+   "x": 10552.9,
+   "z": 3061.0,
+   "t": "hill"
+  },
+  {
+   "name": "Baranchik",
+   "x": 10153.1,
+   "z": 6208.5,
+   "t": "hill"
+  },
+  {
+   "name": "Malinovka",
+   "x": 10897.7,
+   "z": 7575.6,
+   "t": "hill"
+  },
+  {
+   "name": "Dubina",
+   "x": 11107.9,
+   "z": 8474.8,
+   "t": "hill"
+  },
+  {
+   "name": "Klen",
+   "x": 11473.5,
+   "z": 11315.4,
+   "t": "hill"
+  },
+  {
+   "name": "Chernaya Gora",
+   "x": 10280.8,
+   "z": 12053.9,
+   "t": "hill"
+  },
+  {
+   "name": "Zolotar",
+   "x": 10179.0,
+   "z": 11998.0,
+   "t": "ruin"
+  },
+  {
+   "name": "Ostry",
+   "x": 10792.7,
+   "z": 12829.5,
+   "t": "hill"
+  },
+  {
+   "name": "Olsha",
+   "x": 12975.7,
+   "z": 12775.2,
+   "t": "hill"
+  },
+  {
+   "name": "Tikhiy Zaliv",
+   "x": 1221.5,
+   "z": 2111.9,
+   "t": "marine"
+  },
+  {
+   "name": "Mutnyi Zaliv",
+   "x": 5735.5,
+   "z": 1918.9,
+   "t": "marine"
+  },
+  {
+   "name": "Cherny Zaliv",
+   "x": 7599.1,
+   "z": 2486.6,
+   "t": "marine"
+  },
+  {
+   "name": "Zeleny Zaliv",
+   "x": 11227.0,
+   "z": 2989.8,
+   "t": "marine"
+  },
+  {
+   "name": "Skalisty Proliv",
+   "x": 13385.9,
+   "z": 3613.9,
+   "t": "marine"
+  },
+  {
+   "name": "Nizhniy Zaliv",
+   "x": 12989.3,
+   "z": 8515.8,
+   "t": "marine"
+  },
+  {
+   "name": "Zaliv Guba",
+   "x": 14328.4,
+   "z": 13136.7,
+   "t": "marine"
+  },
+  {
+   "name": "Rify",
+   "x": 13931.7,
+   "z": 11288.6,
+   "t": "local"
+  },
+  {
+   "name": "Ivovoye Ozero",
+   "x": 13248.0,
+   "z": 11572.0,
+   "t": "marine"
+  },
+  {
+   "name": "Chernoye Ozero",
+   "x": 13381.0,
+   "z": 12002.0,
+   "t": "marine"
+  },
+  {
+   "name": "Plotina Topolka",
+   "x": 10231.3,
+   "z": 3691.1,
+   "t": "marine"
+  },
+  {
+   "name": "Plotina Pobeda",
+   "x": 9928.3,
+   "z": 13874.6,
+   "t": "marine"
+  },
+  {
+   "name": "Plotina Tishina",
+   "x": 1150.8,
+   "z": 6432.5,
+   "t": "marine"
+  },
+  {
+   "name": "Ozerko",
+   "x": 6777.6,
+   "z": 4492.4,
+   "t": "marine"
+  },
+  {
+   "name": "Prud",
+   "x": 6611.0,
+   "z": 9308.6,
+   "t": "marine"
+  },
+  {
+   "name": "Chortovzamok",
+   "x": 6883.2,
+   "z": 11501.3,
+   "t": "ruin"
+  },
+  {
+   "name": "Zub",
+   "x": 6574.3,
+   "z": 5573.9,
+   "t": "ruin"
+  },
+  {
+   "name": "Rog",
+   "x": 11267.2,
+   "z": 4293.0,
+   "t": "ruin"
+  },
+  {
+   "name": "Grozovy Pereval",
+   "x": 3318.1,
+   "z": 15250.5,
+   "t": "local"
+  },
+  {
+   "name": "Sosnovy Pereval",
+   "x": 2687.4,
+   "z": 6590.3,
+   "t": "local"
+  },
+  {
+   "name": "Pereval Oreshka",
+   "x": 9822.2,
+   "z": 6088.8,
+   "t": "local"
+  },
+  {
+   "name": "Turovskiypereval",
+   "x": 14674.2,
+   "z": 14089.3,
+   "t": "local"
+  },
+  {
+   "name": "Tri Doliny",
+   "x": 12764.5,
+   "z": 5412.2,
+   "t": "local"
+  },
+  {
+   "name": "Grozovye Doly",
+   "x": 10404.0,
+   "z": 14793.2,
+   "t": "local"
+  },
+  {
+   "name": "Klyuch",
+   "x": 9282.6,
+   "z": 13476.7,
+   "t": "ruin"
+  },
+  {
+   "name": "Lysaya Gora",
+   "x": 6722.5,
+   "z": 14050.4,
+   "t": "hill"
+  },
+  {
+   "name": "Glubokoye Ozero",
+   "x": 1692.6,
+   "z": 14821.6,
+   "t": "marine"
+  },
+  {
+   "name": "Skalka",
+   "x": 5758.0,
+   "z": 14486.0,
+   "t": "local"
+  },
+  {
+   "name": "Vidy",
+   "x": 785.1,
+   "z": 14398.8,
+   "t": "local"
+  },
+  {
+   "name": "Tumanny Verkh",
+   "x": 331.2,
+   "z": 12983.0,
+   "t": "hill"
+  },
+  {
+   "name": "Adamovka",
+   "x": 5340.7,
+   "z": 11380.0,
+   "t": "local"
+  },
+  {
+   "name": "Shishok",
+   "x": 3559.3,
+   "z": 9422.3,
+   "t": "hill"
+  },
+  {
+   "name": "Skalisty",
+   "x": 13715.5,
+   "z": 3118.8,
+   "t": "village"
+  },
+  {
+   "name": "Storozh",
+   "x": 2816.6,
+   "z": 1278.0,
+   "t": "ruin"
+  },
+  {
+   "name": "Mys Golova",
+   "x": 8286.1,
+   "z": 2405.6,
+   "t": "local"
+  },
+  {
+   "name": "Drakon",
+   "x": 11191.0,
+   "z": 2443.0,
+   "t": "local"
+  },
+  {
+   "name": "Otmel",
+   "x": 11581.2,
+   "z": 3213.2,
+   "t": "local"
+  },
+  {
+   "name": "Mys Krutoy",
+   "x": 13578.2,
+   "z": 3976.8,
+   "t": "local"
+  },
+  {
+   "name": "Tokarnya",
+   "x": 8890.5,
+   "z": 5672.6,
+   "t": "hill"
+  },
+  {
+   "name": "Ostrog",
+   "x": 2655.7,
+   "z": 2264.6,
+   "t": "hill"
+  },
+  {
+   "name": "Maryanka",
+   "x": 2789.0,
+   "z": 3386.0,
+   "t": "local"
+  },
+  {
+   "name": "Polonina",
+   "x": 1004.5,
+   "z": 4242.9,
+   "t": "local"
+  },
+  {
+   "name": "Kalinka",
+   "x": 3346.5,
+   "z": 11292.1,
+   "t": "local"
+  },
+  {
+   "name": "Kikimora",
+   "x": 1812.0,
+   "z": 6200.0,
+   "t": "hill"
+  },
+  {
+   "name": "Bolshoy Kotel",
+   "x": 714.6,
+   "z": 6520.4,
+   "t": "hill"
+  },
+  {
+   "name": "Simurg",
+   "x": 134.0,
+   "z": 7570.0,
+   "t": "hill"
+  },
+  {
+   "name": "Volchiypik",
+   "x": 320.3,
+   "z": 2719.3,
+   "t": "hill"
+  },
+  {
+   "name": "Krona",
+   "x": 1493.0,
+   "z": 9270.3,
+   "t": "ruin"
+  },
+  {
+   "name": "Tri Kresta",
+   "x": 301.0,
+   "z": 9478.0,
+   "t": "local"
+  },
+  {
+   "name": "Rostoki",
+   "x": 744.5,
+   "z": 8647.9,
+   "t": "local"
+  },
+  {
+   "name": "Orlye Ozero",
+   "x": 597.0,
+   "z": 5990.0,
+   "t": "marine"
+  },
+  {
+   "name": "Makosh",
+   "x": 7849.7,
+   "z": 6480.2,
+   "t": "local"
+  },
+  {
+   "name": "Klenovyipereval",
+   "x": 10862.7,
+   "z": 11585.5,
+   "t": "local"
+  },
+  {
+   "name": "Zmeinykhrebet",
+   "x": 11446.2,
+   "z": 13606.9,
+   "t": "local"
+  },
+  {
+   "name": "Sokol",
+   "x": 12001.0,
+   "z": 14813.0,
+   "t": "hill"
+  },
+  {
+   "name": "Krutye Skaly",
+   "x": 14880.6,
+   "z": 13671.8,
+   "t": "local"
+  },
+  {
+   "name": "Bogat",
+   "x": 7058.0,
+   "z": 12023.6,
+   "t": "local"
+  },
+  {
+   "name": "Dubnik",
+   "x": 3298.3,
+   "z": 10330.9,
+   "t": "local"
+  },
+  {
+   "name": "Viselitsa",
+   "x": 12722.2,
+   "z": 7504.0,
+   "t": "hill"
+  },
+  {
+   "name": "Dazhbog",
+   "x": 6581.0,
+   "z": 8590.0,
+   "t": "hill"
+  },
+  {
+   "name": "Verbnik",
+   "x": 4414.9,
+   "z": 9103.0,
+   "t": "marine"
+  },
+  {
+   "name": "Medvezhi Lugi",
+   "x": 9641.0,
+   "z": 13236.0,
+   "t": "local"
+  },
+  {
+   "name": "Voron",
+   "x": 13517.9,
+   "z": 3311.2,
+   "t": "ruin"
+  },
+  {
+   "name": "Gnomov Zamok",
+   "x": 7446.9,
+   "z": 9097.2,
+   "t": "ruin"
+  },
+  {
+   "name": "Glaza",
+   "x": 7383.0,
+   "z": 9320.0,
+   "t": "marine"
+  },
+  {
+   "name": "Karer Krasnaya Zarya",
+   "x": 8565.3,
+   "z": 13418.7,
+   "t": "local"
+  },
+  {
+   "name": "Matveyevo",
+   "x": 4281.0,
+   "z": 7380.0,
+   "t": "local"
+  },
+  {
+   "name": "Kotka",
+   "x": 5873.7,
+   "z": 6883.2,
+   "t": "local"
+  },
+  {
+   "name": "Chernye Skaly",
+   "x": 3932.6,
+   "z": 14599.5,
+   "t": "local"
+  },
+  {
+   "name": "Svyatoy Roman",
+   "x": 84.8,
+   "z": 11901.2,
+   "t": "hill"
+  },
+  {
+   "name": "Koman",
+   "x": 1660.7,
+   "z": 7415.7,
+   "t": "hill"
+  },
+  {
+   "name": "Mayak",
+   "x": 12323.8,
+   "z": 4553.1,
+   "t": "hill"
+  },
+  {
+   "name": "Military Base",
+   "x": 4497.0,
+   "z": 8291.0,
+   "t": "local"
+  },
+  {
+   "name": "Military Base",
+   "x": 1570.0,
+   "z": 14069.0,
+   "t": "local"
+  },
+  {
+   "name": "Military Base",
+   "x": 7838.8,
+   "z": 14704.8,
+   "t": "local"
+  },
+  {
+   "name": "Military Base",
+   "x": 2410.4,
+   "z": 5133.7,
+   "t": "local"
+  },
+  {
+   "name": "Military Base",
+   "x": 2016.0,
+   "z": 3408.0,
+   "t": "local"
+  },
+  {
+   "name": "Airfield",
+   "x": 5082.0,
+   "z": 2376.3,
+   "t": "local"
+  },
+  {
+   "name": "Airfield",
+   "x": 12100.7,
+   "z": 12573.9,
+   "t": "local"
+  },
+  {
+   "name": "North-West Airfield",
+   "x": 4428.0,
+   "z": 10179.0,
+   "t": "local"
+  }
+ ]
+}

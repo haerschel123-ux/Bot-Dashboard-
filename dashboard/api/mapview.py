@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import os
 import re
 
 from aiohttp import web
@@ -46,10 +48,33 @@ def _tile_url(map_name: str) -> str:
     return _XAM_TEMPLATE.format(folder=folder) if folder else ""
 
 
+# Gebündelte, exakte Ortslisten (dashboard/static/locations/<Karte>.json),
+# generiert aus den Kartendaten von dayz.xam.nu – einmal geladen, dann gecacht.
+_LOCATIONS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                              "static", "locations")
+_locations_cache: dict = {}
+
+
 def _locations(map_name: str):
-    locs = ctx.g("_MAP_LOCATIONS", {}) or {}
-    data = locs.get(map_name) or locs.get("ChernarusPlus") or []
-    return [{"name": n, "x": x, "z": z} for (n, x, z) in data]
+    if map_name in _locations_cache:
+        return _locations_cache[map_name]
+    out = []
+    path = os.path.join(_LOCATIONS_DIR, f"{map_name}.json")
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        out = [{"name": l["name"], "x": l["x"], "z": l["z"], "t": l.get("t", "local")}
+               for l in data.get("locations", [])
+               if l.get("name") and isinstance(l.get("x"), (int, float))]
+    except Exception:
+        out = []
+    if not out:
+        # Fallback: grobe Ortsliste aus dem Bot (_MAP_LOCATIONS)
+        locs = ctx.g("_MAP_LOCATIONS", {}) or {}
+        data = locs.get(map_name) or locs.get("ChernarusPlus") or []
+        out = [{"name": n, "x": x, "z": z, "t": "city"} for (n, x, z) in data]
+    _locations_cache[map_name] = out
+    return out
 
 
 async def map_meta(request: web.Request) -> web.Response:

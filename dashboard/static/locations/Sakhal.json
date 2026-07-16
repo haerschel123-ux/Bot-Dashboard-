@@ -1,0 +1,367 @@
+{
+ "map": "Sakhal",
+ "world_size": 15360,
+ "source": "dayz.xam.nu 1.29-2",
+ "locations": [
+  {
+   "name": "Petropavlovsk-Sakhalinsk",
+   "x": 4749.0,
+   "z": 10695.0,
+   "t": "capital"
+  },
+  {
+   "name": "Severomorsk",
+   "x": 9544.0,
+   "z": 13656.0,
+   "t": "city"
+  },
+  {
+   "name": "Aniva",
+   "x": 12895.0,
+   "z": 7273.0,
+   "t": "city"
+  },
+  {
+   "name": "Nogovo",
+   "x": 7814.0,
+   "z": 7949.0,
+   "t": "city"
+  },
+  {
+   "name": "Bolotnoye",
+   "x": 5040.0,
+   "z": 8667.0,
+   "t": "village"
+  },
+  {
+   "name": "Dudino",
+   "x": 6233.0,
+   "z": 7245.0,
+   "t": "village"
+  },
+  {
+   "name": "Tikhoye",
+   "x": 6260.0,
+   "z": 8669.0,
+   "t": "local"
+  },
+  {
+   "name": "Taranaj",
+   "x": 9706.0,
+   "z": 6584.0,
+   "t": "local"
+  },
+  {
+   "name": "Yuzhnoye",
+   "x": 10972.0,
+   "z": 6323.0,
+   "t": "village"
+  },
+  {
+   "name": "Dolinovka",
+   "x": 9831.0,
+   "z": 9835.0,
+   "t": "local"
+  },
+  {
+   "name": "Goryachevo",
+   "x": 8774.0,
+   "z": 10059.0,
+   "t": "local"
+  },
+  {
+   "name": "Yasnaya Polyana",
+   "x": 8116.0,
+   "z": 9191.0,
+   "t": "local"
+  },
+  {
+   "name": "Lesogorovka",
+   "x": 10969.0,
+   "z": 9695.0,
+   "t": "village"
+  },
+  {
+   "name": "Sakhalag",
+   "x": 12163.0,
+   "z": 9698.0,
+   "t": "village"
+  },
+  {
+   "name": "İturup",
+   "x": 10371.0,
+   "z": 10700.0,
+   "t": "local"
+  },
+  {
+   "name": "Vostok",
+   "x": 13910.0,
+   "z": 8337.0,
+   "t": "village"
+  },
+  {
+   "name": "Shumnoye",
+   "x": 14383.0,
+   "z": 8842.0,
+   "t": "village"
+  },
+  {
+   "name": "Baikovo",
+   "x": 14571.0,
+   "z": 9794.0,
+   "t": "village"
+  },
+  {
+   "name": "Matrosovo",
+   "x": 14233.0,
+   "z": 11586.0,
+   "t": "village"
+  },
+  {
+   "name": "Rudnogorsk",
+   "x": 13587.0,
+   "z": 12152.0,
+   "t": "city"
+  },
+  {
+   "name": "Rybnoye",
+   "x": 12471.0,
+   "z": 12667.0,
+   "t": "village"
+  },
+  {
+   "name": "Podgornoe",
+   "x": 10985.0,
+   "z": 13209.0,
+   "t": "village"
+  },
+  {
+   "name": "Orlovo",
+   "x": 10373.0,
+   "z": 13348.0,
+   "t": "village"
+  },
+  {
+   "name": "Tumanovo",
+   "x": 8417.0,
+   "z": 13646.0,
+   "t": "village"
+  },
+  {
+   "name": "Evey",
+   "x": 7954.0,
+   "z": 13512.0,
+   "t": "village"
+  },
+  {
+   "name": "Yasnomorsk",
+   "x": 6951.0,
+   "z": 13331.0,
+   "t": "village"
+  },
+  {
+   "name": "Sovetskoye",
+   "x": 6413.0,
+   "z": 12783.0,
+   "t": "village"
+  },
+  {
+   "name": "Zhupanovo",
+   "x": 5741.0,
+   "z": 12516.0,
+   "t": "village"
+  },
+  {
+   "name": "Vysokoye",
+   "x": 11186.2,
+   "z": 7965.8,
+   "t": "village"
+  },
+  {
+   "name": "Wolf Peak",
+   "x": 8196.0,
+   "z": 11668.0,
+   "t": "hill"
+  },
+  {
+   "name": "Storozh",
+   "x": 8776.0,
+   "z": 12791.0,
+   "t": "hill"
+  },
+  {
+   "name": "Lonely Volcano",
+   "x": 10029.0,
+   "z": 12087.0,
+   "t": "hill"
+  },
+  {
+   "name": "Ostry",
+   "x": 11546.0,
+   "z": 11669.0,
+   "t": "hill"
+  },
+  {
+   "name": "Tupoy",
+   "x": 11898.0,
+   "z": 11267.0,
+   "t": "hill"
+  },
+  {
+   "name": "Ice Ridge",
+   "x": 10756.0,
+   "z": 8669.0,
+   "t": "hill"
+  },
+  {
+   "name": "Troika",
+   "x": 9016.0,
+   "z": 9268.0,
+   "t": "hill"
+  },
+  {
+   "name": "East Peak",
+   "x": 12835.0,
+   "z": 9418.0,
+   "t": "hill"
+  },
+  {
+   "name": "Zvezdnyy Nikel",
+   "x": 12033.0,
+   "z": 10323.0,
+   "t": "local"
+  },
+  {
+   "name": "Sakhalin Geopp",
+   "x": 8407.0,
+   "z": 10204.0,
+   "t": "local"
+  },
+  {
+   "name": "Tungar",
+   "x": 12630.0,
+   "z": 14135.0,
+   "t": "local"
+  },
+  {
+   "name": "Ushki",
+   "x": 10817.0,
+   "z": 14631.0,
+   "t": "local"
+  },
+  {
+   "name": "Sputnik",
+   "x": 7786.0,
+   "z": 14802.0,
+   "t": "local"
+  },
+  {
+   "name": "Utios",
+   "x": 5453.0,
+   "z": 14535.0,
+   "t": "local"
+  },
+  {
+   "name": "Tochka",
+   "x": 3755.0,
+   "z": 14402.0,
+   "t": "local"
+  },
+  {
+   "name": "Cherepakha",
+   "x": 835.0,
+   "z": 11285.0,
+   "t": "local"
+  },
+  {
+   "name": "Urup",
+   "x": 1537.0,
+   "z": 891.0,
+   "t": "local"
+  },
+  {
+   "name": "Mrak",
+   "x": 8443.0,
+   "z": 1328.0,
+   "t": "local"
+  },
+  {
+   "name": "Solisko",
+   "x": 12653.0,
+   "z": 2121.0,
+   "t": "local"
+  },
+  {
+   "name": "Elizarovo",
+   "x": 13492.0,
+   "z": 5178.0,
+   "t": "local"
+  },
+  {
+   "name": "Slomannyy",
+   "x": 6313.0,
+   "z": 6454.0,
+   "t": "local"
+  },
+  {
+   "name": "Utichiy",
+   "x": 8628.0,
+   "z": 5146.0,
+   "t": "local"
+  },
+  {
+   "name": "Kyetoi",
+   "x": 5755.0,
+   "z": 2066.0,
+   "t": "local"
+  },
+  {
+   "name": "Missile Bay",
+   "x": 4396.0,
+   "z": 7269.0,
+   "t": "marine"
+  },
+  {
+   "name": "Burukan",
+   "x": 2706.0,
+   "z": 6540.0,
+   "t": "city"
+  },
+  {
+   "name": "Shantar",
+   "x": 2278.0,
+   "z": 3413.0,
+   "t": "village"
+  },
+  {
+   "name": "Tugur",
+   "x": 1738.0,
+   "z": 6131.0,
+   "t": "local"
+  },
+  {
+   "name": "Neran",
+   "x": 2666.0,
+   "z": 9297.0,
+   "t": "local"
+  },
+  {
+   "name": "Kekra",
+   "x": 7188.0,
+   "z": 4235.0,
+   "t": "local"
+  },
+  {
+   "name": "Ayan",
+   "x": 1243.0,
+   "z": 3022.0,
+   "t": "local"
+  },
+  {
+   "name": "Black Cape",
+   "x": 5084.0,
+   "z": 3592.0,
+   "t": "local"
+  }
+ ]
+}

@@ -1,0 +1,367 @@
+{
+ "map": "Livonia",
+ "world_size": 12800,
+ "source": "dayz.xam.nu 1.29-2",
+ "locations": [
+  {
+   "name": "Bielawa",
+   "x": 1573.4,
+   "z": 9677.5,
+   "t": "village"
+  },
+  {
+   "name": "Lukow",
+   "x": 3529.6,
+   "z": 11966.5,
+   "t": "village"
+  },
+  {
+   "name": "Gliniska",
+   "x": 4992.6,
+   "z": 9921.7,
+   "t": "village"
+  },
+  {
+   "name": "Brena",
+   "x": 6617.6,
+   "z": 11211.0,
+   "t": "city"
+  },
+  {
+   "name": "Tarnow",
+   "x": 9328.3,
+   "z": 10904.8,
+   "t": "city"
+  },
+  {
+   "name": "Sitnik",
+   "x": 11502.3,
+   "z": 9573.0,
+   "t": "village"
+  },
+  {
+   "name": "Borek",
+   "x": 9807.5,
+   "z": 8495.1,
+   "t": "village"
+  },
+  {
+   "name": "Zapadlisko",
+   "x": 8058.2,
+   "z": 8711.8,
+   "t": "village"
+  },
+  {
+   "name": "Nidek",
+   "x": 6128.9,
+   "z": 8013.3,
+   "t": "village"
+  },
+  {
+   "name": "Topolin",
+   "x": 1858.8,
+   "z": 7330.9,
+   "t": "city"
+  },
+  {
+   "name": "Adamów",
+   "x": 3076.3,
+   "z": 6851.3,
+   "t": "village"
+  },
+  {
+   "name": "Muratyn",
+   "x": 4567.5,
+   "z": 6384.4,
+   "t": "village"
+  },
+  {
+   "name": "Radunin",
+   "x": 7298.4,
+   "z": 6491.9,
+   "t": "city"
+  },
+  {
+   "name": "Lembork",
+   "x": 8680.5,
+   "z": 6635.7,
+   "t": "village"
+  },
+  {
+   "name": "Gieraltów",
+   "x": 11240.0,
+   "z": 4380.4,
+   "t": "village"
+  },
+  {
+   "name": "Nadbór",
+   "x": 6109.5,
+   "z": 3983.2,
+   "t": "city"
+  },
+  {
+   "name": "Zalesie",
+   "x": 896.1,
+   "z": 5536.1,
+   "t": "village"
+  },
+  {
+   "name": "Huta",
+   "x": 5141.5,
+   "z": 5472.8,
+   "t": "village"
+  },
+  {
+   "name": "Radacz",
+   "x": 4007.8,
+   "z": 7939.9,
+   "t": "village"
+  },
+  {
+   "name": "Olszanka",
+   "x": 4819.0,
+   "z": 7674.1,
+   "t": "village"
+  },
+  {
+   "name": "Lipina",
+   "x": 5941.9,
+   "z": 6820.0,
+   "t": "village"
+  },
+  {
+   "name": "Kolembrody",
+   "x": 8417.0,
+   "z": 11981.9,
+   "t": "village"
+  },
+  {
+   "name": "Karlin",
+   "x": 10072.7,
+   "z": 6957.0,
+   "t": "village"
+  },
+  {
+   "name": "Sobotka",
+   "x": 6256.9,
+   "z": 10252.9,
+   "t": "village"
+  },
+  {
+   "name": "Roztoka",
+   "x": 7695.3,
+   "z": 5317.5,
+   "t": "village"
+  },
+  {
+   "name": "Polana",
+   "x": 3279.6,
+   "z": 2132.1,
+   "t": "village"
+  },
+  {
+   "name": "Dolnik",
+   "x": 11312.4,
+   "z": 655.7,
+   "t": "village"
+  },
+  {
+   "name": "Sowa",
+   "x": 11662.8,
+   "z": 12064.3,
+   "t": "hill"
+  },
+  {
+   "name": "Krsnik",
+   "x": 7874.9,
+   "z": 10081.2,
+   "t": "hill"
+  },
+  {
+   "name": "Dambog",
+   "x": 577.3,
+   "z": 1124.7,
+   "t": "hill"
+  },
+  {
+   "name": "Skala",
+   "x": 2999.2,
+   "z": 1956.1,
+   "t": "hill"
+  },
+  {
+   "name": "Swarog",
+   "x": 4855.0,
+   "z": 2224.3,
+   "t": "hill"
+  },
+  {
+   "name": "Rodzanica",
+   "x": 8881.5,
+   "z": 2042.0,
+   "t": "hill"
+  },
+  {
+   "name": "Bagno",
+   "x": 11822.8,
+   "z": 11134.5,
+   "t": "local"
+  },
+  {
+   "name": "Wrzeszcz",
+   "x": 9043.2,
+   "z": 4438.5,
+   "t": "local"
+  },
+  {
+   "name": "Drewniki",
+   "x": 5834.7,
+   "z": 5092.9,
+   "t": "local"
+  },
+  {
+   "name": "Kulno",
+   "x": 11150.0,
+   "z": 2391.5,
+   "t": "local"
+  },
+  {
+   "name": "Hrud",
+   "x": 6452.5,
+   "z": 9371.1,
+   "t": "local"
+  },
+  {
+   "name": "Jantar",
+   "x": 3532.4,
+   "z": 8955.1,
+   "t": "marine"
+  },
+  {
+   "name": "Grabinskie",
+   "x": 11249.2,
+   "z": 10993.2,
+   "t": "marine"
+  },
+  {
+   "name": "Wolisko",
+   "x": 12368.5,
+   "z": 10884.0,
+   "t": "marine"
+  },
+  {
+   "name": "Sitnickie",
+   "x": 11411.9,
+   "z": 10439.6,
+   "t": "marine"
+  },
+  {
+   "name": "Grabin",
+   "x": 10666.2,
+   "z": 11025.6,
+   "t": "village"
+  },
+  {
+   "name": "Branzow Castle",
+   "x": 1072.5,
+   "z": 11418.8,
+   "t": "ruin"
+  },
+  {
+   "name": "Piorun",
+   "x": 645.6,
+   "z": 12158.6,
+   "t": "hill"
+  },
+  {
+   "name": "Jezurów",
+   "x": 2097.8,
+   "z": 2355.9,
+   "t": "local"
+  },
+  {
+   "name": "Tymbark",
+   "x": 2902.4,
+   "z": 1221.2,
+   "t": "local"
+  },
+  {
+   "name": "Hedryków",
+   "x": 4513.0,
+   "z": 4795.5,
+   "t": "local"
+  },
+  {
+   "name": "Widok",
+   "x": 10238.5,
+   "z": 2143.6,
+   "t": "local"
+  },
+  {
+   "name": "Kopa",
+   "x": 5518.8,
+   "z": 8767.6,
+   "t": "hill"
+  },
+  {
+   "name": "Kamieniołom Maksymilian",
+   "x": 6512.2,
+   "z": 4847.9,
+   "t": "local"
+  },
+  {
+   "name": "Piekło",
+   "x": 3323.9,
+   "z": 3717.3,
+   "t": "local"
+  },
+  {
+   "name": "Sarnówek",
+   "x": 3308.1,
+   "z": 4970.2,
+   "t": "village"
+  },
+  {
+   "name": "Konopki",
+   "x": 11489.6,
+   "z": 2897.9,
+   "t": "village"
+  },
+  {
+   "name": "Pionier",
+   "x": 1341.4,
+   "z": 4867.2,
+   "t": "camp"
+  },
+  {
+   "name": "Potoki",
+   "x": 11633.9,
+   "z": 1947.2,
+   "t": "camp"
+  },
+  {
+   "name": "Rumianek",
+   "x": 11775.6,
+   "z": 5487.1,
+   "t": "camp"
+  },
+  {
+   "name": "Lawenda",
+   "x": 813.7,
+   "z": 8606.3,
+   "t": "camp"
+  },
+  {
+   "name": "Tymianka",
+   "x": 11351.7,
+   "z": 10062.7,
+   "t": "camp"
+  },
+  {
+   "name": "Półkrabiec",
+   "x": 11871.3,
+   "z": 6580.2,
+   "t": "ruin"
+  }
+ ]
+}
